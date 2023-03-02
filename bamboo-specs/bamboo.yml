@@ -1,0 +1,191 @@
+---
+version: 2
+plan:
+  project-key: XLRP
+  key: BACKENDPROD
+  name: XLRP backend
+stages:
+  - Default Stage:
+      manual: false
+      final: false
+      jobs:
+        - Default Job
+Default Job:
+  key: JOB1
+  tasks:
+    - checkout:
+        force-clean-build: 'false'
+        description: Checkout Default Repository
+    - script:
+        interpreter: SHELL
+        scripts:
+          - echo PLAN_NAME="$( echo '${bamboo.planKey}' | tr '[:upper:]' '[:lower:]')" > variables
+        description: Set ENV Variable
+    - inject-variables:
+        file: variables
+        scope: RESULT
+        namespace: inject
+        description: Inject Variable
+    - any-task:
+        plugin-key: com.atlassian.bamboo.plugins.bamboo-docker-plugin:task.docker.cli
+        configuration:
+          commandOption: build
+          repository: docker.atican.dev/${bamboo.inject.PLAN_NAME}:${bamboo.buildNumber}
+          dockerfileOption: existing
+          nocache: 'false'
+          save: 'false'
+        description: Build Image
+    - any-task:
+        plugin-key: com.atlassian.bamboo.plugins.bamboo-docker-plugin:task.docker.cli
+        configuration:
+          commandOption: push
+          pushRepository: docker.atican.dev/${bamboo.inject.PLAN_NAME}:${bamboo.buildNumber}
+          registryOption: custom
+        description: Push Image
+  artifact-subscriptions: []
+branches:
+  create: manually
+  delete:
+    after-deleted-days: 1
+    after-inactive-days: never
+  link-to-jira: true
+notifications:
+  - events:
+      - plan-responsibility-changed
+    recipients:
+      - responsible
+  - events:
+      - job-error
+    recipients:
+      - responsible
+      - committers
+      - watchers
+  - events:
+      - plan-completed
+    recipients:
+      - committers
+      - watchers
+labels: []
+dependencies:
+  require-all-stages-passing: false
+  enabled-for-branches: true
+  block-strategy: none
+  plans: []
+other:
+  concurrent-build-plugin: system-default
+  all-other-apps:
+    custom:
+      buildNumber.enableSyncBranchBuildNumber: 'true'
+      buildExpiryConfig.enabled: 'false'
+      queue.priority: DEFAULT
+---
+version: 2
+plan:
+  key: XLRP-BACKENDPROD
+plan-permissions:
+  - users:
+      - nick
+    permissions:
+      - view
+      - edit
+      - build
+      - clone
+      - admin
+  - users:
+      - venkatesh.chakraborty
+      - anup.swarnkar
+    permissions:
+      - view
+      - build
+  - groups:
+      - TFW DevOps
+      - the-fast-way-pm
+    permissions:
+      - view
+      - edit
+      - build
+      - clone
+      - admin
+  - groups:
+      - TFW Frontend Devs
+    permissions:
+      - view
+      - edit
+      - build
+      - clone
+---
+version: 2
+deployment:
+  name: XLRP Backend Deployment
+  source-plan: XLRP-BACKENDPROD
+release-naming:
+  next-version-name: release-192
+  applies-to-branches: false
+  auto-increment: true
+  auto-increment-variables: []
+environments:
+- Production Server
+Production Server:
+  triggers:
+  - build-success
+  tasks:
+    - clean
+    - checkout:
+        force-clean-build: 'false'
+        description: Checkout Default Repository
+    - script:
+        interpreter: SHELL
+        scripts:
+          - echo PLAN_NAME="$( echo '${bamboo.planKey}' | tr '[:upper:]' '[:lower:]')" > variables
+    - inject-variables:
+        file: variables
+        scope: LOCAL
+        namespace: inject
+    - script:
+        interpreter: SHELL
+        scripts:
+          - echo '{"lastCliUpdateCheck":1658717682549,"cloudrons":{"${bamboo.cloudron_api}":{"apiEndpoint":"${bamboo.cloudron_api}","token":"${bamboo.cloudron_token_secret}"},"default":"${bamboo.cloudron_api}"}}' > ~/.cloudron.json
+          - npx cloudron update --image docker.atican.dev/${bamboo.inject.PLAN_NAME}:${bamboo.buildNumber} --app ${bamboo.inject.PLAN_NAME} --no-wait || npx cloudron install --image docker.atican.dev/${bamboo.inject.PLAN_NAME}:${bamboo.buildNumber} -l ${bamboo.inject.PLAN_NAME}
+  final-tasks:
+    - script:
+        interpreter: SHELL
+        scripts:
+          - rm -rf ~/.cloudron.json
+  variables:
+    cloudron_api: my.aticloud.atican.dev
+    cloudron_username: nick
+    cloudron_token_secret: BAMSCRT@0@0@SVAlAyWq65MlzPsZfHqnDiO9gzu987/P+DAEdgJpcoXePc05edNFqV3yTw3HoRfyAutNUN3AXtQvDtI0OSfHQtWVj9wyruB++iIlLLmJeQY=
+  requirements: []
+  notifications: []
+---
+version: 2
+deployment:
+  name: XLRP Backend Deployment
+deployment-permissions:
+  - users:
+      - nick
+    permissions:
+      - view
+      - edit
+environment-permissions:
+- Production Server:
+  - users:
+    - nick
+    permissions:
+    - view
+    - edit
+    - deploy
+  - users:
+    - venkatesh.chakraborty
+    - anup.swarnkar
+    permissions:
+    - view
+    - deploy
+  - groups:
+    - TFW DevOps
+    - the-fast-way-pm
+    - TFW Frontend Devs
+    permissions:
+    - view
+    - edit
+    - deploy
