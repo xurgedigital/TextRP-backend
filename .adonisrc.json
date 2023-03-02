@@ -1,0 +1,63 @@
+{
+  "typescript": true,
+  "commands": [
+    "./commands",
+    "@adonisjs/core/build/commands/index.js",
+    "@adonisjs/repl/build/commands",
+    "@adonisjs/bouncer/build/commands",
+    "adonis-lucid-filter/build/commands",
+    "@setten/bull-queue/build/commands",
+    "@verful/notifications/build/commands",
+    "@adonisjs/mail/build/commands",
+    "@adonisjs/lucid/build/commands"
+  ],
+  "exceptionHandlerNamespace": "App/Exceptions/Handler",
+  "aliases": {
+    "App": "app",
+    "Config": "config",
+    "Database": "database",
+    "Contracts": "contracts"
+  },
+  "preloads": [
+    "./start/routes",
+    "./start/kernel",
+    "./start/bouncer",
+    "./start/limiter"
+  ],
+  "providers": [
+    "./providers/AppProvider",
+    "@adonisjs/core",
+    "@adonisjs/session",
+    "@adonisjs/auth",
+    "@adonisjs/shield",
+    "@adonisjs/bouncer",
+    "adonis-lucid-filter",
+    "@adonisjs/lucid-slugify",
+    "@setten/bull-queue",
+    "@verful/notifications",
+    "@adonisjs/mail",
+    "@adonisjs/redis",
+    "@adonisjs/limiter",
+    "@adonisjs/route-model-binding/build/providers/RmbProvider",
+    "@adonisjs/lucid",
+    "@adonisjs/ally",
+    "./providers/XummOauthProvider"
+  ],
+  "aceProviders": [
+    "@adonisjs/repl"
+  ],
+  "tests": {
+    "suites": [
+      {
+        "name": "functional",
+        "files": [
+          "tests/functional/**/*.spec(.ts|.js)"
+        ],
+        "timeout": 60000
+      }
+    ]
+  },
+  "testProviders": [
+    "@japa/preset-adonis/TestsProvider"
+  ]
+}
