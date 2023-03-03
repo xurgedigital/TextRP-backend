@@ -39,10 +39,10 @@ const NotificationConfig: NotificationConfig = {
     */
     mail: {
       driver: 'mail',
-      mailer: 'smtp'
+      // mailer: 'smtp'
     },
   },
-  notificationsTable: 'notifications'
+  // notificationsTable: 'notifications'
 }
 
 export default NotificationConfig
