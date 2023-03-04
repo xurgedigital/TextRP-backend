@@ -17,10 +17,13 @@ RUN node ace build --production
 
 FROM base AS production
 ENV NODE_ENV=production
+ENV APP_DATA=/app/data
+ENV APP_HOME=/home/node/app
 ENV PORT=8080
 ENV HOST=0.0.0.0
 COPY --chown=node:node ./package*.json ./
-RUN yarn build
+RUN yarn install
 COPY --chown=node:node --from=build /home/node/app/build .
 EXPOSE $PORT
-CMD [ "dumb-init", "node", "server.ts" ]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD [ "dumb-init", "node", "server.js" ]
