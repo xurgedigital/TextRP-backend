@@ -44,7 +44,12 @@ const corsConfig: CorsConfig = {
   |                     one of the above values.
   |
   */
-  origin: true,
+  origin: [
+    'http://localhost:3000/',
+    'http://localhost:3001/',
+    'https://xlrp-frontendprod.aticloud.atican.dev/',
+    'https://textrp-beta.35.77.151.153.nip.io/',
+  ],
 
   /*
   |--------------------------------------------------------------------------
