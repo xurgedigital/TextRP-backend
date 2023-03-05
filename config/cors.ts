@@ -75,7 +75,12 @@ const corsConfig: CorsConfig = {
   | Function          - Receives the current header and should return one of the above values.
   |
   */
-  headers: true,
+  headers: [
+    'http://localhost:3000/',
+    'http://localhost:3001/',
+    'https://xlrp-frontendprod.aticloud.atican.dev/',
+    'https://textrp-beta.35.77.151.153.nip.io/',
+  ],
 
   /*
   |--------------------------------------------------------------------------
