@@ -8,7 +8,7 @@ USER node
 RUN mkdir tmp
 
 FROM base AS dependencies
-COPY --chown=node:node ./package*.json ./
+COPY --chown=node:node ./package*.json yarn.lock ./
 RUN yarn install
 COPY --chown=node:node . .
 
@@ -23,12 +23,13 @@ ENV APP_HOME=/home/cloudron/app
 ENV PORT=8080
 ENV HOST=0.0.0.0
 WORKDIR $APP_HOME
+RUN chown -R cloudron:cloudron $APP_HOME
 USER cloudron
-COPY --chown=cloudron:cloudron ./package*.json ./
+COPY --chown=cloudron:cloudron ./package*.json yarn.lock ./
 RUN yarn install --production
 COPY --chown=cloudron:cloudron ./docker-entrypoint.sh ./
 COPY --chown=cloudron:cloudron --from=build /home/node/app/build .
 EXPOSE $PORT
 USER root
-ENTRYPOINT ["$APP_HOME/docker-entrypoint.sh"]
+ENTRYPOINT ["/home/cloudron/app/docker-entrypoint.sh"]
 CMD [ "node", "server.js" ]

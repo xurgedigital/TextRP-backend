@@ -4,6 +4,7 @@ set -eu
 
 
 echo "==> Ensure permissions"
+mkdir -p /app/data
 chown -R cloudron:cloudron /app/data
 
 if [[ ! -f "$APP_HOME/.env" ]]; then
