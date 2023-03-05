@@ -20,7 +20,7 @@ const corsConfig: CorsConfig = {
   | you can define a function to enable/disable it on per request basis as well.
   |
   */
-  enabled: true,
+  enabled: false,
 
   // You can also use a function that return true or false.
   // enabled: (request) => request.url().startsWith('/api')
@@ -44,12 +44,7 @@ const corsConfig: CorsConfig = {
   |                     one of the above values.
   |
   */
-  origin: [
-    'http://localhost:3000/',
-    'http://localhost:3001/',
-    'https://xlrp-frontendprod.aticloud.atican.dev/',
-    'https://textrp-beta.35.77.151.153.nip.io/',
-  ],
+  origin: true,
 
   /*
   |--------------------------------------------------------------------------
@@ -80,12 +75,7 @@ const corsConfig: CorsConfig = {
   | Function          - Receives the current header and should return one of the above values.
   |
   */
-  headers: [
-    'http://localhost:3000/',
-    'http://localhost:3001/',
-    'https://xlrp-frontendprod.aticloud.atican.dev/',
-    'https://textrp-beta.35.77.151.153.nip.io/',
-  ],
+  headers: true,
 
   /*
   |--------------------------------------------------------------------------
