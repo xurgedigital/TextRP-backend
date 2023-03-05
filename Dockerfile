@@ -25,7 +25,9 @@ COPY --chown=node:node ./package*.json ./
 RUN yarn install --production
 COPY --chown=node:node ./docker-entrypoint.sh ./
 COPY --chown=node:node --from=build /home/node/app/build .
+USER root
 RUN mkdir -p $APP_DATA && chown -R node:node $APP_DATA
+USER node
 EXPOSE $PORT
 ENTRYPOINT ["/home/node/app/docker-entrypoint.sh"]
 CMD [ "dumb-init", "node", "server.js" ]
