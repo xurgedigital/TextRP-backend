@@ -22,6 +22,7 @@ ENV APP_DATA=/app/data
 ENV APP_HOME=/home/cloudron/app
 ENV PORT=8080
 ENV HOST=0.0.0.0
+WORKDIR $APP_HOME
 USER cloudron
 COPY --chown=cloudron:cloudron ./package*.json ./
 RUN yarn install --production
