@@ -27,8 +27,8 @@ USER cloudron
 COPY --chown=cloudron:cloudron ./package*.json ./
 RUN yarn install --production
 COPY --chown=cloudron:cloudron ./docker-entrypoint.sh ./
-COPY --chown=cloudron:cloudron --from=build /home/cloudron/app/build .
+COPY --chown=cloudron:cloudron --from=build /home/node/app/build .
 EXPOSE $PORT
 USER root
-ENTRYPOINT ["/home/cloudron/app/docker-entrypoint.sh"]
+ENTRYPOINT ["$APP_HOME/docker-entrypoint.sh"]
 CMD [ "node", "server.js" ]
