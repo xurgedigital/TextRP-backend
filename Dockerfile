@@ -31,5 +31,6 @@ COPY --chown=cloudron:cloudron ./docker-entrypoint.sh ./
 COPY --chown=cloudron:cloudron --from=build /home/node/app/build .
 EXPOSE $PORT
 USER root
+RUN mkdir -p $APP_DATA && touch $APP_DATA/env && rm -rf $APP_HOME/.env && ln -s $APP_DATA/env $APP_HOME/.env
 ENTRYPOINT ["/home/cloudron/app/docker-entrypoint.sh"]
 CMD [ "node", "server.js" ]
