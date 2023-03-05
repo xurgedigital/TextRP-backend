@@ -22,7 +22,7 @@ ENV APP_HOME=/home/node/app
 ENV PORT=8080
 ENV HOST=0.0.0.0
 COPY --chown=node:node ./package*.json ./
-RUN yarn install
+RUN yarn install --production
 COPY --chown=node:node ./docker-entrypoint.sh ./
 COPY --chown=node:node --from=build /home/node/app/build .
 EXPOSE $PORT

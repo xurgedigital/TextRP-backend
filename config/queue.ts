@@ -15,10 +15,10 @@ const queueConfig: QueueConfig = {
   jobs: {
     attempts: 3,
     removeOnComplete: 100,
-    removeOnFail: 100
-  }
+    removeOnFail: 100,
+  },
 }
 
-const queueNames:['default'] = ['default']
+const queueNames: ['default'] = ['default']
 
-export { queueConfig as config, queueNames}
+export { queueConfig as config, queueNames }

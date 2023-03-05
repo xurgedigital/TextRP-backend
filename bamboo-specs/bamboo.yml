@@ -124,10 +124,10 @@ release-naming:
   auto-increment: true
   auto-increment-variables: []
 environments:
-- Development Server
+  - Development Server
 Development Server:
   triggers:
-  - build-success
+    - build-success
   tasks:
     - clean
     - checkout:
@@ -168,18 +168,18 @@ deployment-permissions:
       - view
       - edit
 environment-permissions:
-- Development Server:
-  - users:
-    - nick
-    permissions:
-    - view
-    - edit
-    - deploy
-  - groups:
-    - TFW DevOps
-    - the-fast-way-pm
-    - TFW Frontend Devs
-    permissions:
-    - view
-    - edit
-    - deploy
+  - Development Server:
+      - users:
+          - nick
+        permissions:
+          - view
+          - edit
+          - deploy
+      - groups:
+          - TFW DevOps
+          - the-fast-way-pm
+          - TFW Frontend Devs
+        permissions:
+          - view
+          - edit
+          - deploy

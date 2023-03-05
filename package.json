@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "prepare": "husky install",
+    "check-types": "tsc --pretty --noEmit",
+    "check-format": "prettier --check .",
     "dev": "node ace serve --watch",
     "build": "node ace build --production",
     "start": "node server.ts",
@@ -24,7 +27,10 @@
     }
   },
   "eslintIgnore": [
-    "build"
+    "build",
+    ".idea",
+    "node_modules",
+    "yark.lock"
   ],
   "prettier": {
     "trailingComma": "es5",
@@ -47,6 +53,7 @@
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-adonis": "^2.1.1",
     "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
     "pino-pretty": "^9.4.0",
     "prettier": "^2.8.4",
     "typescript": "~4.6",
