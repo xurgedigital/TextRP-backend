@@ -3,6 +3,9 @@
 set -eu
 
 
+echo "==> Ensure permissions"
+chown -R cloudron:cloudron /app/data
+
 if [[ ! -f "$APP_HOME/.env" ]]; then
     echo "==> Linking .env on first run"
     if [[ ! -f "$APP_HOME/.storage_setup" ]]; then
@@ -37,7 +40,7 @@ export PG_DB_NAME=${CLOUDRON_POSTGRESQL_DATABASE:-}
 
 
 echo "==> Migrating App"
-node ace migration:run --force
+/usr/local/bin/gosu cloudron:cloudron node ace migration:run --force
 echo "==> Starting App"
 
-exec "$@"
+exec /usr/local/bin/gosu cloudron:cloudron "$@"

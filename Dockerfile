@@ -15,19 +15,19 @@ COPY --chown=node:node . .
 FROM dependencies AS build
 RUN node ace build --production
 
-FROM base AS production
+FROM cloudron/base:4.0.0@sha256:31b195ed0662bdb06a6e8a5ddbedb6f191ce92e8bee04c03fb02dd4e9d0286df AS production
+ENV NPM_CONFIG_LOGLEVEL warn
 ENV NODE_ENV=production
 ENV APP_DATA=/app/data
-ENV APP_HOME=/home/node/app
+ENV APP_HOME=/home/cloudron/app
 ENV PORT=8080
 ENV HOST=0.0.0.0
-COPY --chown=node:node ./package*.json ./
+USER cloudron
+COPY --chown=cloudron:cloudron ./package*.json ./
 RUN yarn install --production
-COPY --chown=node:node ./docker-entrypoint.sh ./
-COPY --chown=node:node --from=build /home/node/app/build .
-USER root
-RUN mkdir -p $APP_DATA && chown -R node:node $APP_DATA
-USER node
+COPY --chown=cloudron:cloudron ./docker-entrypoint.sh ./
+COPY --chown=cloudron:cloudron --from=build /home/cloudron/app/build .
 EXPOSE $PORT
-ENTRYPOINT ["/home/node/app/docker-entrypoint.sh"]
-CMD [ "dumb-init", "node", "server.js" ]
+USER root
+ENTRYPOINT ["/home/cloudron/app/docker-entrypoint.sh"]
+CMD [ "node", "server.js" ]
