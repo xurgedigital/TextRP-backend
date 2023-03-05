@@ -119,13 +119,13 @@ deployment:
   name: XLRP Backend Deployment
   source-plan: XLRP-BACKENDPROD
 release-naming:
-  next-version-name: release-192
+  next-version-name: release-1
   applies-to-branches: false
   auto-increment: true
   auto-increment-variables: []
 environments:
-- Production Server
-Production Server:
+- Development Server
+Development Server:
   triggers:
   - build-success
   tasks:
@@ -168,18 +168,12 @@ deployment-permissions:
       - view
       - edit
 environment-permissions:
-- Production Server:
+- Development Server:
   - users:
     - nick
     permissions:
     - view
     - edit
-    - deploy
-  - users:
-    - venkatesh.chakraborty
-    - anup.swarnkar
-    permissions:
-    - view
     - deploy
   - groups:
     - TFW DevOps

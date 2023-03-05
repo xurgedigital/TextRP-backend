@@ -19,33 +19,24 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
-import XummService from 'App/Services/XummService'
 import User from 'App/Models/User'
 
 Route.get('/', async () => {
   return { hello: 'You have found me now do you know what to do?' }
 })
 
-Route.post('/login', 'AuthController.login')
+Route.get('/login', 'AuthController.login')
 
-Route.post('/webhook', async () => {
-  const ping = await XummService.sdk.payload.create({
-    txjson: {
-      TransactionType: 'SignIn',
-    },
-  })
-  return { hello: ping }
-})
+Route.post('/webhook', 'AuthController.webhook')
 
 Route.get('/me', async ({ auth }) => {
   await auth.use('web').authenticate()
   const user = await auth.use('web').user
-  return { hello: user }
+  return { me: user }
 })
 
-Route.post('/logout', async ({auth}) => {
-  await auth.use('web').authenticate()
-  auth.use('web').logout()
+Route.post('/logout', async ({ session }) => {
+  session.forget('current_uuid')
   return { success: true }
 })
 

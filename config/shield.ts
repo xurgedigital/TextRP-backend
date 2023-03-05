@@ -44,8 +44,7 @@ export const csp: ShieldConfig['csp'] = {
   | }
   |
   */
-  directives: {
-  },
+  directives: {},
 
   /*
   |--------------------------------------------------------------------------
@@ -93,7 +92,7 @@ export const csrf: ShieldConfig['csrf'] = {
 	| ```
   |
   */
-  exceptRoutes: [],
+  exceptRoutes: ['/webhook'],
 
   /*
   |--------------------------------------------------------------------------
