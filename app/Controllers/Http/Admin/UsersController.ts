@@ -57,7 +57,7 @@ export default class UsersController {
     const payload = await request.validate({ schema: updateUserSchema })
     await UserCredit.firstOrCreate(
       {
-        user_id: user.id,
+        userId: user.id,
       },
       payload
     )
