@@ -1,5 +1,8 @@
 import { DateTime } from 'luxon'
-import { column, BaseModel } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, column, HasMany, hasMany, hasOne, HasOne } from '@ioc:Adonis/Lucid/Orm'
+import UserCredit from 'App/Models/UserCredit'
+import Discount from 'App/Models/Discount'
+import UserSubscription from 'App/Models/UserSubscription'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -28,4 +31,16 @@ export default class User extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
+
+  @hasOne(() => UserCredit, {})
+  public credit: HasOne<typeof UserCredit>
+
+  @hasOne(() => Discount, {
+    localKey: 'address',
+    foreignKey: 'address',
+  })
+  public discount: HasOne<typeof Discount>
+
+  @hasMany(() => UserSubscription, {})
+  public subscriptions: HasMany<typeof UserSubscription>
 }

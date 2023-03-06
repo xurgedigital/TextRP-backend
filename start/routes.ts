@@ -19,7 +19,6 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
-import User from 'App/Models/User'
 
 Route.get('/', async () => {
   return { hello: 'You have found me now do you know what to do?' }
@@ -30,70 +29,65 @@ Route.get('/login', 'AuthController.login')
 Route.post('/webhook', 'AuthController.webhook')
 
 Route.get('/me', async ({ auth }) => {
-  await auth.use('web').authenticate()
   const user = await auth.use('web').user
   return { me: user }
-})
+}).middleware('auth')
 
-Route.post('/logout', async ({ session }) => {
+Route.delete('/logout', async ({ session, auth }) => {
   session.forget('current_uuid')
+  await auth.use('web').logout()
   return { success: true }
+}).middleware('auth')
+
+Route.group(() => {
+  Route.group(() => {
+    Route.get('/', 'Admin/UsersController.index')
+    Route.post('/:user', 'Admin/UsersController.update')
+    Route.post('/:user/create_credit', 'Admin/UsersController.createCredit')
+    Route.post('/:user/credits/:credit', 'Admin/UsersController.updateCredit')
+    Route.post('/:user/create_discount', 'Admin/UsersController.updateDiscount')
+    Route.post('/:user/discounts/:discount', 'Admin/UsersController.createDiscount')
+    Route.post('/:user/create_subscription', 'Admin/UsersController.updateSubscription')
+    Route.post(
+      '/:user/user_subscriptions/:user_subscription',
+      'Admin/UsersController.createSubscription'
+    )
+  }).prefix('/users')
+
+  Route.group(() => {
+    Route.get('/', 'Admin/CreditsController.index')
+    Route.post('/', 'Admin/CreditsController.create')
+    Route.post('/:credit', 'Admin/CreditsController.update')
+    Route.delete('/:credit', 'Admin/CreditsController.delete')
+  }).prefix('/credits')
+
+  Route.group(() => {
+    Route.get('/', 'Admin/DiscountsController.index')
+    Route.post('/', 'Admin/DiscountsController.create')
+    Route.post('/:discount', 'Admin/DiscountsController.update')
+    Route.delete('/:discount', 'Admin/DiscountsController.delete')
+  }).prefix('/discounts')
+
+  Route.group(() => {
+    Route.get('/', 'Admin/PlatformSettingsController.index')
+    Route.post('/', 'Admin/PlatformSettingsController.create')
+    Route.post('/:platform_setting', 'Admin/PlatformSettingsController.update')
+    Route.delete('/:platform_setting', 'Admin/PlatformSettingsController.delete')
+  }).prefix('/platform_settings')
+
+  Route.group(() => {
+    Route.get('/', 'Admin/SubscriptionsController.index')
+    Route.post('/', 'Admin/SubscriptionsController.create')
+    Route.post('/:subscription', 'Admin/SubscriptionsController.update')
+    Route.delete('/:subscription', 'Admin/SubscriptionsController.delete')
+  }).prefix('/subscriptions')
+
+  Route.group(() => {
+    Route.get('/', 'Admin/SupportedNftsController.index')
+    Route.post('/', 'Admin/SupportedNftsController.create')
+    Route.post('/:supported_nft', 'Admin/SupportedNftsController.update')
+    Route.delete('/:supported_nft', 'Admin/SupportedNftsController.delete')
+  }).prefix('/supported_nfts')
 })
-
-Route.get('/xumm/redirect', async ({ ally }) => {
-  return ally.use('xumm').redirect((request) => {
-    request
-      .scopes(['XummPkce'])
-      // .param('grant_type', 'authorization_code')
-      .param('response_type', 'token')
-  })
-})
-
-Route.get('/xumm/callback', async ({ ally, auth, response }) => {
-  const github = ally.use('xumm')
-
-  /**
-   * User has explicitly denied the login request
-   */
-  if (github.accessDenied()) {
-    return 'Access was denied'
-  }
-
-  /**
-   * Unable to verify the CSRF state
-   */
-  if (github.stateMisMatch()) {
-    return 'Request expired. Retry again'
-  }
-
-  /**
-   * There was an unknown error during the redirect
-   */
-  if (github.hasError()) {
-    return github.getError()
-  }
-
-  /**
-   * Finally, access the user
-   */
-  const user = await github.user()
-
-  const finalUser = await User.firstOrCreate(
-    {
-      address: user.id,
-    },
-    {
-      name: user.name,
-      email: user.email,
-      access_token: user.token.token,
-      profile_picture: user.avatarUrl,
-    }
-  )
-
-  /**
-   * Login user using the web guard
-   */
-  await auth.use('web').login(finalUser)
-
-  return response.redirect('/')
-})
+  .middleware('auth')
+  .prefix('/admin')
