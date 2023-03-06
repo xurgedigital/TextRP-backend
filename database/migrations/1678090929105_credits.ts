@@ -8,7 +8,7 @@ export default class extends BaseSchema {
       table.increments('id')
       table.string('name')
       table.integer('available_credits')
-      table.decimal('price', 8, 16)
+      table.string('price')
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL
        */
