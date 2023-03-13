@@ -20,6 +20,7 @@ export default class SubscriptionsController {
       name: schema.string(),
       description: schema.string(),
       available_credits: schema.number(),
+      price: schema.number(),
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
@@ -33,6 +34,7 @@ export default class SubscriptionsController {
       name: schema.string(),
       description: schema.string(),
       available_credits: schema.number(),
+      price: schema.number(),
     })
 
     const payload = await request.validate({ schema: updateUserSchema })

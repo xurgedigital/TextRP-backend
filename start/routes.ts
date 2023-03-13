@@ -28,10 +28,7 @@ Route.get('/login', 'AuthController.login')
 
 Route.post('/webhook', 'AuthController.webhook')
 
-Route.get('/me', async ({ auth }) => {
-  const user = await auth.use('web').user
-  return { me: user }
-}).middleware('auth')
+Route.get('/me', 'User/UsersController.index').middleware('auth')
 
 Route.delete('/logout', async ({ session, auth }) => {
   session.forget('current_uuid')
@@ -91,3 +88,12 @@ Route.group(() => {
 })
   .middleware('auth')
   .prefix('/admin')
+
+Route.group(() => {
+  Route.group(() => {
+    Route.get('/me', 'User/UsersController.index')
+    Route.post('/update', 'User/UsersController.update')
+  }).prefix('/')
+})
+  .middleware('auth')
+  .prefix('/user')
