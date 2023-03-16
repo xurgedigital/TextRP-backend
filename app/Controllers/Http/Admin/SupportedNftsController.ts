@@ -7,10 +7,20 @@ import { schema } from '@ioc:Adonis/Core/Validator'
 
 export default class SupportedNftsController {
   public async index({ request, response }: HttpContextContract) {
+    const { title, description, taxon }: Partial<SupportedNft> = request.qs()
     const page = request.input('page', 1)
     const limit = request.input('limit', 10)
-
-    const users = await SupportedNft.query().paginate(page, limit)
+    const query = SupportedNft.query()
+    if (title) {
+      query.where('title', 'LIKE', '%' + title + '%')
+    }
+    if (description) {
+      query.where('description', 'LIKE', '%' + description + '%')
+    }
+    if (taxon) {
+      query.where('taxon', 'LIKE', '%' + taxon + '%')
+    }
+    const users = await query.paginate(page, limit)
     users.baseUrl('/admin/supported_nfts')
     return response.json(users)
   }
