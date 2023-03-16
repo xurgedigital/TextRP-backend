@@ -96,12 +96,11 @@ Route.group(() => {
   .middleware('auth')
   .prefix('/admin')
 
-Route.post('/pay', 'Admin/PaymentController.makePayment').middleware('auth').prefix('/payment')
-
 Route.group(() => {
   Route.group(() => {
     Route.get('/me', 'User/UsersController.index')
     Route.post('/update', 'User/UsersController.update')
+    Route.post('/payment', 'User/PaymentController.payment')
   }).prefix('/')
 })
   .middleware('auth')

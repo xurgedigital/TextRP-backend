@@ -49,7 +49,7 @@ export default class PaymentController {
     return response.status(200)
   }
 
-  public async makePayment({ request, response, auth }: HttpContextContract) {
+  public async payment({ request, response, auth }: HttpContextContract) {
     const { destination, creditId } = request.body()
     if (!destination || !creditId) {
       return response.status(422).json({ error: 'missing destination, creditId' })
@@ -60,12 +60,11 @@ export default class PaymentController {
     }
     const authUser = await auth.use('web').user
     const user = await User.query()
-      .preload('discount')
-      .preload('subscriptions')
-      .preload('credit')
       .where('id', authUser?.id || 0)
       .first()
-
+    if (!user) {
+      return response.status(404).json({ error: 'User not found' })
+    }
     const ping = await XummService.sdk.payload.create({
       txjson: {
         TransactionType: 'Payment',
