@@ -59,6 +59,14 @@ Route.group(() => {
   }).prefix('/credits')
 
   Route.group(() => {
+    Route.get('/', 'Admin/PaymentController.index')
+    Route.post('/', 'Admin/PaymentController.create')
+    Route.post('/:payment', 'Admin/PaymentController.update')
+    Route.delete('/:payment', 'Admin/PaymentController.delete')
+    Route.delete('/:payment', 'Admin/PaymentController.makePayment')
+  }).prefix('/payment')
+
+  Route.group(() => {
     Route.get('/', 'Admin/DiscountsController.index')
     Route.post('/', 'Admin/DiscountsController.create')
     Route.post('/:discount', 'Admin/DiscountsController.update')

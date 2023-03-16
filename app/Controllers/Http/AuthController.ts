@@ -6,6 +6,8 @@ import { DateTime } from 'luxon'
 import * as crypto from 'crypto'
 import Env from '@ioc:Adonis/Core/Env'
 import User from 'App/Models/User'
+import Payment from 'App/Models/Payment'
+import UserCredit from 'App/Models/UserCredit'
 
 export interface WebhookData {
   meta: Meta
@@ -45,6 +47,12 @@ export interface UserTokenInterface {
   user_token: string
   token_issued: number
   token_expiration: number
+}
+
+export interface PaymentPayload {
+  TransactionType: string
+  Destination: string
+  Amount: number
 }
 
 export default class AuthController {
@@ -94,7 +102,7 @@ export default class AuthController {
       401
     )
     const payload = await XummService.sdk.payload.get(data.payloadResponse.payload_uuidv4)
-    if (data.userToken && payload?.response?.account) {
+    if (data.userToken && payload?.response?.account && payload?.payload?.tx_type !== 'Payment') {
       await User.firstOrCreate(
         {
           address: payload?.response?.account,
@@ -112,7 +120,32 @@ export default class AuthController {
         }
       )
     }
-
+    if (payload?.payload?.tx_type !== 'Payment') {
+      const payloadUUID = payload?.meta?.uuid
+      const paymentData = await Payment.findBy('uuid', payloadUUID)
+      try {
+        if (!paymentData) {
+          return response.json({ error: 'Payment data not found!' })
+        }
+        const paymentPayload: PaymentPayload = JSON.parse(paymentData.payload)
+        if (
+          paymentPayload.Destination === payload?.payload?.request_json?.Destination &&
+          payload?.payload?.request_json?.Amount === paymentPayload.Amount
+        ) {
+          const userCredit = await UserCredit.query().where('userId', paymentData.userId).first()
+          if (!userCredit) {
+            return response.json({ error: 'User Credit data not found!' })
+          }
+          userCredit.balance = userCredit.balance + paymentPayload.Amount
+          await userCredit.save()
+        }
+      } catch (error) {
+        if (paymentData) {
+          paymentData.errorDetails = error
+          await paymentData.save()
+        }
+      }
+    }
     return response.status(200)
   }
 }
