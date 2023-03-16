@@ -1,5 +1,4 @@
-// import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-
+import Credit from 'App/Models/Credit'
 import XummService from 'App/Services/XummService'
 import UserToken from 'App/Models/UserToken'
 import { DateTime } from 'luxon'
@@ -14,6 +13,7 @@ export interface WebhookData {
   custom_meta: CustomMeta
   payloadResponse: PayloadResponse
   userToken?: UserTokenInterface
+  creditId?: number
 }
 
 export interface CustomMeta {
@@ -128,15 +128,19 @@ export default class AuthController {
           return response.json({ error: 'Payment data not found!' })
         }
         const paymentPayload: PaymentPayload = JSON.parse(paymentData.payload)
+        const creditData = await Credit.find(data.creditId)
+        if (!creditData) {
+          return response.json({ error: 'credit data not found!' })
+        }
         if (
           paymentPayload.Destination === payload?.payload?.request_json?.Destination &&
-          payload?.payload?.request_json?.Amount === paymentPayload.Amount
+          payload?.payload?.request_json?.Amount === creditData.price
         ) {
           const userCredit = await UserCredit.query().where('userId', paymentData.userId).first()
           if (!userCredit) {
             return response.json({ error: 'User Credit data not found!' })
           }
-          userCredit.balance = userCredit.balance + paymentPayload.Amount
+          userCredit.balance = userCredit.balance + creditData.price
           await userCredit.save()
         }
       } catch (error) {

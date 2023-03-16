@@ -63,7 +63,6 @@ Route.group(() => {
     Route.post('/', 'Admin/PaymentController.create')
     Route.post('/:payment', 'Admin/PaymentController.update')
     Route.delete('/:payment', 'Admin/PaymentController.delete')
-    Route.delete('/:payment', 'Admin/PaymentController.makePayment')
   }).prefix('/payment')
 
   Route.group(() => {
@@ -96,6 +95,8 @@ Route.group(() => {
 })
   .middleware('auth')
   .prefix('/admin')
+
+Route.post('/pay', 'Admin/PaymentController.makePayment').middleware('auth').prefix('/payment')
 
 Route.group(() => {
   Route.group(() => {
