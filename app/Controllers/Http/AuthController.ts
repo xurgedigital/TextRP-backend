@@ -125,12 +125,12 @@ export default class AuthController {
       const paymentData = await Payment.findBy('uuid', payloadUUID)
       try {
         if (!paymentData) {
-          return response.json({ error: 'Payment data not found!' })
+          return response.status(422).json({ error: 'Payment data not found!' })
         }
         const paymentPayload: PaymentPayload = JSON.parse(paymentData.payload)
         const creditData = await Credit.find(data.creditId)
         if (!creditData) {
-          return response.json({ error: 'credit data not found!' })
+          return response.status(422).json({ error: 'credit data not found!' })
         }
         if (
           paymentPayload.Destination === payload?.payload?.request_json?.Destination &&
@@ -138,9 +138,9 @@ export default class AuthController {
         ) {
           const userCredit = await UserCredit.query().where('userId', paymentData.userId).first()
           if (!userCredit) {
-            return response.json({ error: 'User Credit data not found!' })
+            return response.status(422).json({ error: 'User Credit data not found!' })
           }
-          userCredit.balance = userCredit.balance + creditData.price
+          userCredit.balance = userCredit.balance + creditData.available_credits
           await userCredit.save()
         }
       } catch (error) {
@@ -148,6 +148,7 @@ export default class AuthController {
           paymentData.errorDetails = error
           await paymentData.save()
         }
+        return response.status(500)
       }
     }
     return response.status(200)
