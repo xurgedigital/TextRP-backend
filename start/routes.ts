@@ -19,9 +19,15 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
+import User from 'App/Models/User'
 
 Route.get('/', async () => {
   return { hello: 'You have found me now do you know what to do?' }
+})
+Route.get('/mock-login', async ({ auth }) => {
+  const user = await User.firstOrFail()
+  await auth.use('web').login(user)
+  return { me: user }
 })
 
 Route.get('/login', 'AuthController.login')
@@ -39,6 +45,7 @@ Route.delete('/logout', async ({ session, auth }) => {
 Route.group(() => {
   Route.group(() => {
     Route.get('/', 'Admin/UsersController.index')
+    Route.get('/:user', 'Admin/UsersController.show')
     Route.post('/:user', 'Admin/UsersController.update')
     Route.post('/:user/create_credit', 'Admin/UsersController.createCredit')
     Route.post('/:user/credits/:credit', 'Admin/UsersController.updateCredit')
@@ -90,11 +97,9 @@ Route.group(() => {
   .prefix('/admin')
 
 Route.group(() => {
-  Route.group(() => {
-    Route.get('/me', 'User/UsersController.index')
-    Route.post('/update', 'User/UsersController.update')
-    Route.post('/payment/:credit', 'User/PaymentController.payment')
-  }).prefix('/')
+  Route.get('/me', 'User/UsersController.index')
+  Route.post('/update', 'User/UsersController.update')
+  Route.post('/payment/:credit', 'User/PaymentController.payment')
 })
   .middleware('auth')
   .prefix('/user')

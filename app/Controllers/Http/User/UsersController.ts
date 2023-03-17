@@ -2,17 +2,18 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { schema } from '@ioc:Adonis/Core/Validator'
 import User from 'App/Models/User'
 
+export const loadUserData = async (user: User): Promise<User> => {
+  await user?.load('discount')
+  await user?.load('subscriptions')
+  await user?.load('credit')
+  return user
+}
 export default class UsersController {
   public async index({ response, auth }: HttpContextContract) {
     const authUser = await auth.use('web').user
-    const user = await User.query()
-      .preload('discount')
-      .preload('subscriptions')
-      .preload('credit')
-      .where('id', authUser?.id || 0)
-      .first()
+    if (authUser) await loadUserData(authUser)
 
-    return response.json(user)
+    return response.json({ user: authUser })
   }
 
   public async update({ request, response, auth }: HttpContextContract) {
