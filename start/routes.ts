@@ -93,7 +93,8 @@ Route.group(() => {
   Route.group(() => {
     Route.get('/me', 'User/UsersController.index')
     Route.post('/update', 'User/UsersController.update')
-    Route.post('/payment/:credit', 'User/PaymentController.payment')
+    Route.post('/payment/:credit', 'User/PaymentController.creditPayment')
+    Route.post('/payment/:subscription', 'User/PaymentController.subscriptionPayment')
   }).prefix('/')
 })
   .middleware('auth')

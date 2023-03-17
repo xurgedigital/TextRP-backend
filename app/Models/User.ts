@@ -20,6 +20,9 @@ export default class User extends BaseModel {
   @column()
   public email: string | null
 
+  @column()
+  public isActive: boolean
+
   @column({ serializeAs: null })
   public access_token: string | null
 

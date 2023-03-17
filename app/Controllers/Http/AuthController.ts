@@ -60,6 +60,9 @@ export default class AuthController {
     try {
       await auth.use('web').authenticate()
       const user = await auth.use('web').user
+      if (!user?.isActive) {
+        throw 'User is inactive'
+      }
       return { me: user }
     } catch (e) {}
     const sessionUuid = session.get('current_uuid')

@@ -1,5 +1,6 @@
+import Credit from 'App/Models/Credit'
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, BelongsTo, column } from '@ioc:Adonis/Lucid/Orm'
 
 export default class Payment extends BaseModel {
   @column({ isPrimary: true })
@@ -7,6 +8,14 @@ export default class Payment extends BaseModel {
 
   @column({})
   public userId: number
+
+  @column({})
+  public paymenttableId: number
+
+  @column({})
+  public paymenttableType: string
+
+  public credit: BelongsTo<typeof Credit>
 
   @column()
   public uuid: string
