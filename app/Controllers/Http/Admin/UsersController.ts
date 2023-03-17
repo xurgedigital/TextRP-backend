@@ -8,16 +8,19 @@ import UserSubscription from 'App/Models/UserSubscription'
 
 export default class UsersController {
   public async index({ request, response }: HttpContextContract) {
-    const { email, name }: Partial<User> = request.qs()
+    const { search } = request.qs()
     const page = request.input('page', 1)
     const limit = request.input('limit', 10)
 
     const query = User.query()
-    if (email) {
-      query.where('email', 'LIKE', '%' + email + '%')
-    }
-    if (name) {
-      query.where('name', 'LIKE', '%' + name + '%')
+    if (search && typeof search === 'string') {
+      query
+        .where((query) => {
+          query.where('name', 'LIKE', '%' + search + '%')
+        })
+        .orWhere((query) => {
+          query.where('address', 'LIKE', '%' + search + '%')
+        })
     }
     const users = await query
       .preload('discount')
