@@ -13,13 +13,15 @@ export default class UsersController {
     const limit = request.input('limit', 10)
 
     const query = User.query()
-    query
-      .where((query) => {
-        query.where('name', 'LIKE', '%' + search + '%')
-      })
-      .orWhere((query) => {
-        query.where('address', 'LIKE', '%' + search + '%')
-      })
+    if (search && typeof search === 'string') {
+      query
+        .where((query) => {
+          query.where('name', 'LIKE', '%' + search + '%')
+        })
+        .orWhere((query) => {
+          query.where('address', 'LIKE', '%' + search + '%')
+        })
+    }
     const users = await query
       .preload('discount')
       .preload('subscriptions')
