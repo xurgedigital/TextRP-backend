@@ -54,7 +54,7 @@ export default class PaymentController {
     await Payment.firstOrCreate(
       {
         userId: authUser?.id,
-        uuid: 'ping?.uuid',
+        uuid: ping?.uuid,
         payload: JSON.stringify(payload),
         paymenttableId: entityId,
         paymenttableType: paymentType,
