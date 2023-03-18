@@ -5,6 +5,7 @@ import { schema } from '@ioc:Adonis/Core/Validator'
 import UserCredit from 'App/Models/UserCredit'
 import Discount from 'App/Models/Discount'
 import UserSubscription from 'App/Models/UserSubscription'
+import { loadUserData } from 'App/Controllers/Http/User/UsersController'
 
 export default class UsersController {
   public async index({ request, response }: HttpContextContract) {
@@ -40,6 +41,13 @@ export default class UsersController {
     const payload = await request.validate({ schema: updateUserSchema })
     user.merge(payload)
     await user.save()
+    await loadUserData(user)
+    return response.json(user)
+  }
+
+  @bind()
+  public async show({ response }: HttpContextContract, user: User) {
+    await loadUserData(user)
     return response.json(user)
   }
 
@@ -56,6 +64,7 @@ export default class UsersController {
     const payload = await request.validate({ schema: updateUserSchema })
     credit.merge(payload)
     await credit.save()
+    await loadUserData(user)
     return response.json(user)
   }
 
@@ -72,6 +81,7 @@ export default class UsersController {
       },
       payload
     )
+    await loadUserData(user)
     return response.json(user)
   }
 
@@ -90,6 +100,7 @@ export default class UsersController {
       ...payload,
     })
     await discount.save()
+    await loadUserData(user)
     return response.json(user)
   }
 
@@ -106,6 +117,7 @@ export default class UsersController {
       },
       payload
     )
+    await loadUserData(user)
     return response.json(user)
   }
 
@@ -122,6 +134,7 @@ export default class UsersController {
     const payload = await request.validate({ schema: updateUserSchema })
     userSubscription.merge(payload)
     await userSubscription.save()
+    await loadUserData(user)
     return response.json(user)
   }
 
@@ -139,6 +152,7 @@ export default class UsersController {
       },
       payload
     )
+    await loadUserData(user)
     return response.json(user)
   }
 }
