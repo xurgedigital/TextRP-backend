@@ -100,6 +100,10 @@ Route.group(() => {
   Route.get('/me', 'User/UsersController.index')
   Route.post('/update', 'User/UsersController.update')
   Route.post('/payment/:credit', 'User/PaymentController.payment')
+
+  Route.group(() => {
+    Route.post('/sendMessage', 'User/TwilioController.sendMessage')
+  }).prefix('/twilio')
 })
   .middleware('auth')
   .prefix('/user')
