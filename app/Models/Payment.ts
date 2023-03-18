@@ -1,6 +1,8 @@
+import Subscription from 'App/Models/Subscription'
 import Credit from 'App/Models/Credit'
 import { DateTime } from 'luxon'
-import { BaseModel, BelongsTo, column } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, HasOne, column } from '@ioc:Adonis/Lucid/Orm'
+import { PaymentTypeEnum } from 'App/Controllers/Http/User/PaymentController'
 
 export default class Payment extends BaseModel {
   @column({ isPrimary: true })
@@ -13,9 +15,11 @@ export default class Payment extends BaseModel {
   public paymenttableId: number
 
   @column({})
-  public paymenttableType: string
+  public paymenttableType: PaymentTypeEnum
 
-  public credit: BelongsTo<typeof Credit>
+  public credit: HasOne<typeof Credit>
+
+  public subscription: HasOne<typeof Subscription>
 
   @column()
   public uuid: string

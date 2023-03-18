@@ -1,4 +1,4 @@
-import Credit from 'App/Models/Credit'
+import { PaymentTypeEnum } from 'App/Controllers/Http/User/PaymentController'
 import XummService from 'App/Services/XummService'
 import UserToken from 'App/Models/UserToken'
 import { DateTime } from 'luxon'
@@ -125,31 +125,38 @@ export default class AuthController {
     }
     if (payload?.payload?.tx_type !== 'Payment') {
       const payloadUUID = payload?.meta?.uuid
-      const paymentData = await Payment.findBy('uuid', payloadUUID)
+      const paymentRepository = await Payment.findBy('uuid', payloadUUID)
       try {
-        if (!paymentData) {
+        if (!paymentRepository) {
           return response.status(422).json({ error: 'Payment data not found!' })
         }
-        const paymentPayload: PaymentPayload = JSON.parse(paymentData.payload)
-        const creditData = await Credit.find(data.creditId)
-        if (!creditData) {
-          return response.status(422).json({ error: 'credit data not found!' })
-        }
+        const paymentPayload: PaymentPayload = JSON.parse(paymentRepository.payload)
         if (
           paymentPayload.Destination === payload?.payload?.request_json?.Destination &&
-          payload?.payload?.request_json?.Amount === creditData.price
+          payload?.payload?.request_json?.Amount === paymentPayload.Amount
         ) {
-          const userCredit = await UserCredit.query().where('userId', paymentData.userId).first()
+          const userCredit = await UserCredit.query()
+            .where('userId', paymentRepository.userId)
+            .first()
           if (!userCredit) {
             return response.status(422).json({ error: 'User Credit data not found!' })
           }
-          userCredit.balance = userCredit.balance + creditData.available_credits
+          const user = await User.find(paymentRepository.userId)
+          await user?.load('discount')
+          if (paymentRepository.paymenttableType === PaymentTypeEnum.CREDIT) {
+            await paymentRepository.load('credit')
+            userCredit.balance = userCredit.balance + paymentRepository.credit.available_credits
+          } else if (paymentRepository.paymenttableType === PaymentTypeEnum.SUBSCRIPTION) {
+            await paymentRepository.load('subscription')
+            userCredit.balance =
+              userCredit.balance + paymentRepository.subscription.available_credits
+          }
           await userCredit.save()
         }
       } catch (error) {
-        if (paymentData) {
-          paymentData.errorDetails = error
-          await paymentData.save()
+        if (paymentRepository) {
+          paymentRepository.errorDetails = error
+          await paymentRepository.save()
         }
         return response.status(500)
       }
