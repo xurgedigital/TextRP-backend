@@ -34,13 +34,13 @@ Route.get('/login', 'AuthController.login')
 
 Route.post('/webhook', 'AuthController.webhook')
 
-Route.get('/me', 'User/UsersController.index').middleware('auth')
+Route.get('/me', 'User/UsersController.index').middleware(['auth', 'active'])
 
 Route.delete('/logout', async ({ session, auth }) => {
   session.forget('current_uuid')
   await auth.use('web').logout()
   return { success: true }
-}).middleware('auth')
+}).middleware(['auth', 'active'])
 
 Route.group(() => {
   Route.group(() => {
@@ -93,7 +93,7 @@ Route.group(() => {
     Route.delete('/:supported_nft', 'Admin/SupportedNftsController.delete')
   }).prefix('/supported_nfts')
 })
-  .middleware('auth')
+  .middleware(['auth', 'active'])
   .prefix('/admin')
 
 Route.group(() => {
@@ -102,5 +102,5 @@ Route.group(() => {
   Route.post('creditPayment/:credit', 'User/PaymentController.creditPayment')
   Route.post('subscriptionPayment/:subscription', 'User/PaymentController.subscriptionPayment')
 })
-  .middleware('auth')
+  .middleware(['auth', 'active'])
   .prefix('/user')
