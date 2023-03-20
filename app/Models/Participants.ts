@@ -1,5 +1,14 @@
 import { DateTime } from 'luxon'
-import { BaseModel, BelongsTo, belongsTo, column, hasOne, HasOne } from '@ioc:Adonis/Lucid/Orm'
+import {
+  BaseModel,
+  BelongsTo,
+  belongsTo,
+  column,
+  HasMany,
+  hasMany,
+  hasOne,
+  HasOne,
+} from '@ioc:Adonis/Lucid/Orm'
 import User from './User'
 import Identifiers from './Identifiers'
 import Conversations from './Conversations'
@@ -12,7 +21,7 @@ export default class Participants extends BaseModel {
   public identifierId: number
 
   @column()
-  public creatorId: string
+  public creatorId: number
 
   @column()
   public conversationId: number
@@ -38,9 +47,9 @@ export default class Participants extends BaseModel {
   })
   public identifiers: HasOne<typeof Identifiers>
 
-  @hasOne(() => Conversations, {
+  @hasMany(() => Conversations, {
     localKey: 'conversationId',
     foreignKey: 'id',
   })
-  public conversations: HasOne<typeof Conversations>
+  public conversations: HasMany<typeof Conversations>
 }

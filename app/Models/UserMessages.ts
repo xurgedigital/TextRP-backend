@@ -10,10 +10,10 @@ export default class UserMessages extends BaseModel {
   public conversationId: number
 
   @column()
-  public messagetype: number
+  public messagetype: string
 
   @column()
-  public content: number
+  public content: string
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
