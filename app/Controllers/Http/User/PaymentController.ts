@@ -31,7 +31,7 @@ export default class PaymentController {
     paymentType: PaymentTypeEnum,
     entityId: number
   ) {
-    const destination = (await PlatformSetting.query().where('key', 'wallet_address').firstOrFail())
+    const destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
       .value
     const authUser = await auth.use('web').user
     await authUser?.load('discount')
