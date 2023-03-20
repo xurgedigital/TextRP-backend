@@ -104,3 +104,9 @@ Route.group(() => {
 })
   .middleware(['auth', 'active'])
   .prefix('/user')
+
+Route.group(() => {
+  Route.get('/credits', 'Admin/CreditsController.index')
+  Route.get('/supportednfts', 'Admin/SupportedNftsController.index')
+  Route.get('/subscriptions', 'Admin/SubscriptionsController.index')
+}).middleware(['auth', 'active'])

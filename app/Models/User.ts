@@ -15,6 +15,12 @@ export default class User extends BaseModel {
   public name: string
 
   @column()
+  public textRpUsername: string
+
+  @column()
+  public about: string
+
+  @column()
   public rememberMeToken: string | null
 
   @column()

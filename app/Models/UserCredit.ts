@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
-import { BaseModel, BelongsTo, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, BelongsTo, afterCreate, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
 import User from 'App/Models/User'
+import PlatformSetting from './PlatformSetting'
 
 export default class UserCredit extends BaseModel {
   @column({ isPrimary: true })
@@ -20,4 +21,20 @@ export default class UserCredit extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
+
+  @afterCreate()
+  public static async hashPassword(userCredit: UserCredit) {
+    try {
+      const bonus = await PlatformSetting.query()
+        .where('key', 'bonus')
+        .orWhere('key', 'bonusIsActive')
+      let obj = {}
+      bonus.map((element) => {
+        obj[element.key] = element.value
+      })
+      if (obj['bonusIsActive']) {
+        userCredit.balance = Number(obj['bonus'])
+      }
+    } catch (error) {}
+  }
 }
