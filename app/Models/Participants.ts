@@ -1,15 +1,5 @@
 import { DateTime } from 'luxon'
-import {
-  BaseModel,
-  BelongsTo,
-  belongsTo,
-  column,
-  HasMany,
-  hasMany,
-  hasOne,
-  HasOne,
-} from '@ioc:Adonis/Lucid/Orm'
-import User from './User'
+import { BaseModel, BelongsTo, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
 import Identifiers from './Identifiers'
 import Conversations from './Conversations'
 
@@ -21,13 +11,10 @@ export default class Participants extends BaseModel {
   public identifierId: number
 
   @column()
-  public creatorId: number
-
-  @column()
   public conversationId: number
 
   @column()
-  public phoneNumber: number
+  public uuid: string
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
@@ -35,21 +22,15 @@ export default class Participants extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
 
-  @belongsTo(() => User, {
-    foreignKey: 'id',
-    localKey: 'creatorId',
-  })
-  public User: BelongsTo<typeof User>
-
-  @hasOne(() => Identifiers, {
+  @belongsTo(() => Identifiers, {
     localKey: 'identifierId',
-    foreignKey: 'id',
+    foreignKey: 'participantsId',
   })
-  public identifiers: HasOne<typeof Identifiers>
+  public identifiers: BelongsTo<typeof Identifiers>
 
-  @hasMany(() => Conversations, {
+  @belongsTo(() => Conversations, {
     localKey: 'conversationId',
     foreignKey: 'id',
   })
-  public conversations: HasMany<typeof Conversations>
+  public conversations: BelongsTo<typeof Conversations>
 }

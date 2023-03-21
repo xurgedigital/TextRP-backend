@@ -5,14 +5,26 @@ import User from 'App/Models/User'
 import { bind } from '@adonisjs/route-model-binding'
 import Conversations from 'App/Models/Conversations'
 import UserMessages from 'App/Models/UserMessages'
+import Identifiers from 'App/Models/Identifiers'
+import Participants from 'App/Models/Participants'
 
 export enum MessageTypeEnum {
   TEXT = 'TEXT',
   MEDIA = 'MEDIA',
 }
+
+export enum ServiceNameEnum {
+  TWILIO = 'TWILIO',
+}
+
+interface ParticipantAttribute {
+  identifierId: number
+  uuid: string
+}
 export interface TwilioConfigType {
   TWILIO_ACCOUNT_SID: string
   TWILIO_AUTH_TOKEN: string
+  WEBHOOK_URL: string
 }
 export default class TwilioController {
   private client = Twilio(TwilioConfig.TWILIO_ACCOUNT_SID, TwilioConfig.TWILIO_AUTH_TOKEN)
@@ -23,7 +35,6 @@ export default class TwilioController {
     conversation: Conversations
   ) {
     const authUser = await auth.use('web').user
-    await authUser?.load('participants')
     const { message } = request.body()
     const messageResponse = this.client.conversations.v1
       .conversations(conversation.platformConverstionId)
@@ -37,48 +48,73 @@ export default class TwilioController {
     return response.json(messageResponse)
   }
 
-  public async startConversation({ auth, request, response }: HttpContextContract) {
-    const authUser = await auth.use('web').user
-    await authUser?.load('participants')
-    const { conversationName } = request.body()
-    const conversation = await this.client.conversations.v1.conversations.create({
-      friendlyName: conversationName,
+  public async recieveMessage(
+    { request, response }: HttpContextContract,
+    conversation: Conversations
+  ) {
+    const { message } = request.body()
+    // const messageResponse = this.client.conversations.v1
+    //   .conversations(conversation.platformConverstionId)
+    //   .webhooks.create({
+    //     target: TwilioConfig.WEBHOOK_URL,
+    //     type: 'webhook',
+    //     configuration: {
+    //       method: 'POST',
+    //       filters: ['onMessageSent'],
+    //     },
+    //   })
+    //   .then((webhook) => console.log(webhook.sid))
+    await UserMessages.create({
+      conversationId: conversation.id,
+      messagetype: MessageTypeEnum.TEXT,
+      content: message,
     })
-
-    return response.json(conversation)
+    // return response.json(messageResponse)
   }
 
   @bind()
-  public async addParticipantToConversation(
-    { auth, request, response }: HttpContextContract,
+  public async startConversation(
+    { request, response }: HttpContextContract,
     conversations: Conversations
   ) {
-    const authUser = await auth.use('web').user
-    await authUser?.load('participants')
-    await authUser?.participants?.load('identifiers')
     const { walletAddress } = request.body()
     const receiverUser = await User.query().where('address', walletAddress).first()
     if (!receiverUser) {
       return response.status(404).json({ error: 'Reciver wallet address not found!' })
     }
-    await receiverUser.load('participants')
-    if (!receiverUser.participants) {
-      // client.conversations.v1.users
-      //                  .create({identity: receiverUser.walletAddress})
-      //                  .then(user => console.log(user.sid));
-      // createIdentifiers
-      // use address as identifier for participant
-      // client.conversations.v1.conversations('CHXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-      //                  .participants
-      //                  .create({identity: '<Chat User Identity>'})
-      //                  .then(participant => console.log(participant.sid));
-      // createParticipants
+    await receiverUser.load('identifiers')
+    let participantAttribute: ParticipantAttribute
+    if (!receiverUser.identifiers) {
+      const conversationUser = await this.client.conversations.v1.users.create({
+        identity: receiverUser.address,
+      })
+      const identifier = await Identifiers.create({
+        uuid: conversationUser.sid,
+        address: receiverUser.address,
+        serviceName: ServiceNameEnum.TWILIO,
+        userId: receiverUser.id,
+      })
+      participantAttribute = {
+        identifierId: identifier.id,
+        uuid: identifier.uuid,
+      }
+    } else {
+      participantAttribute = {
+        identifierId: receiverUser.identifiers.id,
+        uuid: receiverUser.identifiers.uuid,
+      }
     }
-    await receiverUser.participants.load('identifiers')
-    const conversation = await this.client.conversations.v1
+    const conversationParticipant = await this.client.conversations.v1
       .conversations(conversations.platformConverstionId)
-      .participants.create({ identity: receiverUser.address })
-
-    return response.json(conversation)
+      .participants.create({
+        identity: receiverUser.name,
+        attributes: JSON.stringify(participantAttribute),
+      })
+    await Participants.create({
+      identifierId: participantAttribute.identifierId,
+      conversationId: conversations.id,
+      uuid: conversationParticipant.sid,
+    })
+    return response.json(conversationParticipant)
   }
 }

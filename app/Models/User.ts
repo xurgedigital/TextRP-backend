@@ -3,7 +3,7 @@ import { BaseModel, column, HasMany, hasMany, hasOne, HasOne } from '@ioc:Adonis
 import UserCredit from 'App/Models/UserCredit'
 import Discount from 'App/Models/Discount'
 import UserSubscription from 'App/Models/UserSubscription'
-import Participants from './Participants'
+import Identifiers from './Identifiers'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -42,11 +42,11 @@ export default class User extends BaseModel {
   })
   public discount: HasOne<typeof Discount>
 
-  @hasOne(() => Participants, {
+  @hasOne(() => Identifiers, {
     localKey: 'id',
-    foreignKey: 'creatorId',
+    foreignKey: 'userId',
   })
-  public participants: HasOne<typeof Participants>
+  public identifiers: HasOne<typeof Identifiers>
 
   @hasMany(() => UserSubscription, {})
   public subscriptions: HasMany<typeof UserSubscription>
