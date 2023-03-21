@@ -67,12 +67,12 @@ export default class User extends BaseModel {
     try {
       const bonus = await PlatformSetting.query()
         .where('key', 'bonus')
-        .orWhere('key', 'bonusIsActive')
+        .orWhere('key', 'bonusActive')
       let obj = {}
       bonus.map((element) => {
         obj[element.key] = element.value
       })
-      if (obj['bonusIsActive']) {
+      if (obj['bonusActive']) {
         await UserCredit.create({
           userId: user.id,
           balance: Number(obj['bonus']),
