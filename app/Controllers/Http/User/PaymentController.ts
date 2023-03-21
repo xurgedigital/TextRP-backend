@@ -31,11 +31,17 @@ export default class PaymentController {
     paymentType: PaymentTypeEnum,
     entityId: number
   ) {
-    const destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
-      .value
+    let destination
+    try {
+      destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
+        .value
+    } catch (error) {
+      return 'Wallet not found in platform settings'
+    }
     const authUser = await auth.use('web').user
     await authUser?.load('discount')
-    const discoutAmount = (authUser?.discount.discount || 0) / 100
+
+    const discoutAmount = (authUser?.discount?.discount || 0) / 100
     const amount = paymentAmount - paymentAmount * discoutAmount
     const ping = await XummService.sdk.payload.create({
       txjson: {
@@ -50,6 +56,9 @@ export default class PaymentController {
         Destination: destination,
         Amount: amount,
       },
+    }
+    if (!ping?.uuid) {
+      return 'UUID not returned by xumm'
     }
     await Payment.firstOrCreate(
       {

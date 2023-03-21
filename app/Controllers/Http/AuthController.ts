@@ -141,8 +141,6 @@ export default class AuthController {
           if (!userCredit) {
             return response.status(422).json({ error: 'User Credit data not found!' })
           }
-          const user = await User.find(paymentRepository.userId)
-          await user?.load('discount')
           if (paymentRepository.paymenttableType === PaymentTypeEnum.CREDIT) {
             await paymentRepository.load('credit')
             userCredit.balance = userCredit.balance + paymentRepository.credit.available_credits
