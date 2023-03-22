@@ -1,6 +1,8 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 import Conversations from './Conversations'
+import { MessageTypeEnum } from 'App/Controllers/Http/User/TwilioController'
+import User from './User'
 
 export default class UserMessages extends BaseModel {
   @column({ isPrimary: true })
@@ -10,10 +12,13 @@ export default class UserMessages extends BaseModel {
   public conversationId: number
 
   @column()
-  public messagetype: string
+  public messageType: MessageTypeEnum
 
   @column()
   public content: string
+
+  @column()
+  public senderId: number
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
@@ -25,5 +30,11 @@ export default class UserMessages extends BaseModel {
     foreignKey: 'id',
     localKey: 'conversationId',
   })
-  public User: BelongsTo<typeof Conversations>
+  public conversations: BelongsTo<typeof Conversations>
+
+  @belongsTo(() => User, {
+    foreignKey: 'id',
+    localKey: 'senderId',
+  })
+  public user: BelongsTo<typeof User>
 }

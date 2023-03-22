@@ -102,7 +102,13 @@ Route.group(() => {
   Route.post('/payment/:credit', 'User/PaymentController.payment')
 
   Route.group(() => {
-    Route.post('/sendMessage', 'User/TwilioController.sendMessage')
+    Route.post('/send_message/:conversation', 'User/TwilioController.sendMessage')
+    Route.post('/create_conversation', 'User/TwilioController.createConversation')
+    Route.post('/start_conversation/:conversation', 'User/TwilioController.startConversation')
+    Route.get(
+      '/get_all_messages/:conversation',
+      'User/TwilioController.getAllMessagesFromConversation'
+    )
   }).prefix('/twilio')
 })
   .middleware('auth')

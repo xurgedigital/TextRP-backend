@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasOne, HasOne } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, column, HasMany, hasMany, hasOne, HasOne } from '@ioc:Adonis/Lucid/Orm'
 import Identifiers from './Identifiers'
+import Participants from './Participants'
 
 export default class Conversations extends BaseModel {
   @column({ isPrimary: true })
@@ -26,4 +27,10 @@ export default class Conversations extends BaseModel {
     foreignKey: 'id',
   })
   public identifiers: HasOne<typeof Identifiers>
+
+  @hasMany(() => Participants, {
+    localKey: 'platformConverstionId',
+    foreignKey: 'id',
+  })
+  public participants: HasMany<typeof Participants>
 }
