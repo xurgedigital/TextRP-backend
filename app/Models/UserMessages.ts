@@ -15,6 +15,9 @@ export default class UserMessages extends BaseModel {
   public messageType: MessageTypeEnum
 
   @column()
+  public messageUuid: string
+
+  @column()
   public content: string
 
   @column()

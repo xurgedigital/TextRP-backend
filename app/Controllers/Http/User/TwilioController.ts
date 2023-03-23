@@ -7,6 +7,9 @@ import Conversations from 'App/Models/Conversations'
 import UserMessages from 'App/Models/UserMessages'
 import Identifiers from 'App/Models/Identifiers'
 import Participants from 'App/Models/Participants'
+import Ws from 'App/Services/Ws'
+import UserMessageRead from 'App/Models/UserMessageRead'
+import { DateTime } from 'luxon'
 
 export enum MessageTypeEnum {
   TEXT = 'TEXT',
@@ -59,12 +62,15 @@ export default class TwilioController {
     const messageResponse = await this.client.conversations.v1
       .conversations(conversation.platformConverstionId)
       .messages.create({ author: authUser.name, body: message })
-    await UserMessages.create({
+    const userMessage = await UserMessages.create({
       conversationId: conversation.id,
       messageType: MessageTypeEnum.TEXT,
       content: message,
       senderId: authUser.id,
     })
+    Ws.io
+      .to(`${conversation.platformConverstionId}`)
+      .emit('messageNotification', { sender: authUser, userMessage })
     return response.json(messageResponse)
   }
 
@@ -121,6 +127,7 @@ export default class TwilioController {
       identifierId: authUserIdentifier.id,
       creatorId: authUser.id,
       platformConverstionId: conversationResponse.sid,
+      name: conversationName,
     })
     const participantAttribute: ParticipantAttribute = {
       identifierId: authUserIdentifier.id,
@@ -194,9 +201,27 @@ export default class TwilioController {
       const conversationWebhook = await this.configureConversationWebHook(
         conversations.platformConverstionId
       )
+
+      Ws.io
+        .to(`${conversations.platformConverstionId}`)
+        .emit('newUserAddedToConversation', { userName: participantAttribute.name })
       return { conversationParticipant, conversationWebhook }
     } catch (error) {
       console.log(error)
     }
+  }
+
+  @bind()
+  public async markMessageAsRead({ auth, response }: HttpContextContract, message: UserMessages) {
+    const authUser = await auth.use('web').user
+    if (!authUser) {
+      return response.status(404).json({ error: 'Auth user not found!' })
+    }
+    await UserMessageRead.create({
+      readAt: DateTime.now(),
+      userMessageId: message.id,
+      userId: authUser.id,
+    })
+    return response.json({ readBy: authUser })
   }
 }

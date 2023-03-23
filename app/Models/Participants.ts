@@ -24,7 +24,7 @@ export default class Participants extends BaseModel {
 
   @belongsTo(() => Identifiers, {
     localKey: 'identifierId',
-    foreignKey: 'participantsId',
+    foreignKey: 'id',
   })
   public identifiers: BelongsTo<typeof Identifiers>
 

@@ -20,9 +20,6 @@ export default class Identifiers extends BaseModel {
   @column()
   public userId: number
 
-  @column()
-  public participantsId: string
-
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 
@@ -30,8 +27,8 @@ export default class Identifiers extends BaseModel {
   public updatedAt: DateTime
 
   @hasMany(() => Participants, {
-    localKey: 'participantsId',
-    foreignKey: 'id',
+    localKey: 'id',
+    foreignKey: 'identifierId',
   })
   public participants: HasMany<typeof Participants>
 

@@ -30,23 +30,6 @@ Route.get('/mock-login', async ({ auth }) => {
   return { me: user }
 })
 
-// Route.get('/mock-create', async ({ auth }) => {
-//   const tempUser = await User.create({
-//     name: 'taeamp',
-//     address: 'asaadasd',
-//     textRpUsername: 'useranma',
-//     about: 'asaad',
-//     isActive: true,
-//     profile_picture: '',
-//   })
-//   await tempUser.load('credit')
-//   return { tempUser }
-
-//   // const user = await User.firstOrFail()
-//   // await auth.use('web').login(user)
-//   // return { me: user }
-// })
-
 Route.get('/login', 'AuthController.login')
 
 Route.post('/webhook', 'AuthController.webhook')

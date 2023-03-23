@@ -8,6 +8,7 @@ export default class extends BaseSchema {
       table.increments('id')
       table.bigInteger('conversation_id')
       table.bigInteger('sender_id')
+      table.string('message_uuid')
       table.string('message_type')
       table.text('content')
       table.timestamp('created_at', { useTz: true })

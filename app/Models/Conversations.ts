@@ -8,6 +8,9 @@ export default class Conversations extends BaseModel {
   public id: number
 
   @column()
+  public name: string
+
+  @column()
   public identifierId: number
 
   @column()
@@ -29,8 +32,8 @@ export default class Conversations extends BaseModel {
   public identifiers: HasOne<typeof Identifiers>
 
   @hasMany(() => Participants, {
-    localKey: 'platformConverstionId',
-    foreignKey: 'id',
+    localKey: 'id',
+    foreignKey: 'conversationId',
   })
   public participants: HasMany<typeof Participants>
 }
