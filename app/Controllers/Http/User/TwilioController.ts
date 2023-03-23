@@ -8,7 +8,7 @@ import UserMessages from 'App/Models/UserMessages'
 import Identifiers from 'App/Models/Identifiers'
 import Participants from 'App/Models/Participants'
 import Ws from 'App/Services/Ws'
-import UserMessageRead from 'App/Models/UserMessageRead'
+import UserMessagesReads from 'App/Models/UserMessageRead'
 import { DateTime } from 'luxon'
 
 export enum MessageTypeEnum {
@@ -217,11 +217,17 @@ export default class TwilioController {
     if (!authUser) {
       return response.status(404).json({ error: 'Auth user not found!' })
     }
-    await UserMessageRead.create({
-      readAt: DateTime.now(),
-      userMessageId: message.id,
-      userId: authUser.id,
-    })
+    const userMessagesReads = await UserMessagesReads.query()
+      .where('userMessageId', message.id)
+      .andWhere('userId', authUser.id)
+
+    if (!userMessagesReads) {
+      await UserMessagesReads.find({
+        readAt: DateTime.now(),
+        userMessageId: message.id,
+        userId: authUser.id,
+      })
+    }
     return response.json({ readBy: authUser })
   }
 }

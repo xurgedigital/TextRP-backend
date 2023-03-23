@@ -65,8 +65,4 @@ export default Env.rules({
 
   SPOTIFY_CLIENT_ID: Env.schema.string.optional(),
   SPOTIFY_CLIENT_SECRET: Env.schema.string.optional(),
-
-  TWILIO_ACCOUNT_SID: Env.schema.string.optional(),
-  TWILIO_AUTH_TOKEN: Env.schema.string.optional(),
-  WEBHOOK_URL: Env.schema.string.optional(),
 })

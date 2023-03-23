@@ -111,6 +111,7 @@ Route.group(() => {
       '/get_all_messages/:conversation',
       'User/TwilioController.getAllMessagesFromConversation'
     )
+    Route.get('/mark_message_as_read/:message', 'User/TwilioController.markMessageAsRead')
   }).prefix('/twilio')
 })
   .middleware(['auth', 'active'])

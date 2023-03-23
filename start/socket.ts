@@ -7,23 +7,20 @@ Ws.boot()
 /**
  * Listen for incoming socket connections
  */
-Ws.io.on('connection', (socket) => {
-  console.log('Connection established')
-})
-// Ws.io
-//   .use((socket, next) => {
-//     if (socket.handshake.query && socket.handshake.query.token) {
-//       const token = socket.handshake?.query?.token
-//       if (!token || typeof token === 'string') {
-//         SocketAuth.authenticate(token)
-//           .then((user) => {
-//             socket.handshake.auth = user
-//             next()
-//           })
-//           .catch((e) => next(e))
-//       }
-//     } else {
-//       next(new Error('Authentication error'))
-//     }
-//   })
-//   .on('connection', SocketController.handleSocketEvents)
+Ws.io
+  .use((socket, next) => {
+    if (socket.handshake.query && socket.handshake.query.token) {
+      const token = socket.handshake?.query?.token
+      if (!token || typeof token === 'string') {
+        SocketAuth.authenticate(token)
+          .then((user) => {
+            socket.handshake.auth = user
+            next()
+          })
+          .catch((e) => next(e))
+      }
+    } else {
+      next(new Error('Authentication error'))
+    }
+  })
+  .on('connection', SocketController.handleSocketEvents)
