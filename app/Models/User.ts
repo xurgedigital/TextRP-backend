@@ -1,9 +1,18 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, HasMany, hasMany, hasOne, HasOne } from '@ioc:Adonis/Lucid/Orm'
+import {
+  afterCreate,
+  BaseModel,
+  column,
+  HasMany,
+  hasMany,
+  hasOne,
+  HasOne,
+} from '@ioc:Adonis/Lucid/Orm'
 import UserCredit from 'App/Models/UserCredit'
 import Discount from 'App/Models/Discount'
 import UserSubscription from 'App/Models/UserSubscription'
 import Identifiers from './Identifiers'
+import PlatformSetting from './PlatformSetting'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -16,10 +25,19 @@ export default class User extends BaseModel {
   public name: string
 
   @column()
+  public textRpUsername: string
+
+  @column()
+  public about: string
+
+  @column()
   public rememberMeToken: string | null
 
   @column()
   public email: string | null
+
+  @column()
+  public isActive: boolean
 
   @column({ serializeAs: null })
   public access_token: string | null
@@ -50,4 +68,23 @@ export default class User extends BaseModel {
 
   @hasMany(() => UserSubscription, {})
   public subscriptions: HasMany<typeof UserSubscription>
+
+  @afterCreate()
+  public static async addBonus(user: User) {
+    try {
+      const bonus = await PlatformSetting.query()
+        .where('key', 'bonus')
+        .orWhere('key', 'bonusActive')
+      let obj = {}
+      bonus.map((element) => {
+        obj[element.key] = element.value
+      })
+      if (obj['bonusActive']) {
+        await UserCredit.create({
+          userId: user.id,
+          balance: Number(obj['bonus']),
+        })
+      }
+    } catch (error) {}
+  }
 }

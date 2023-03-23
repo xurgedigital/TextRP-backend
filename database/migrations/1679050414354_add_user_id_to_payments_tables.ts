@@ -11,6 +11,9 @@ export default class extends BaseSchema {
   }
 
   public async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.table(this.tableName, (table) => {
+      table.dropColumn('user_id')
+      table.string('userId')
+    })
   }
 }

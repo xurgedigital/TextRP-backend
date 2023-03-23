@@ -30,17 +30,34 @@ Route.get('/mock-login', async ({ auth }) => {
   return { me: user }
 })
 
+// Route.get('/mock-create', async ({ auth }) => {
+//   const tempUser = await User.create({
+//     name: 'taeamp',
+//     address: 'asaadasd',
+//     textRpUsername: 'useranma',
+//     about: 'asaad',
+//     isActive: true,
+//     profile_picture: '',
+//   })
+//   await tempUser.load('credit')
+//   return { tempUser }
+
+//   // const user = await User.firstOrFail()
+//   // await auth.use('web').login(user)
+//   // return { me: user }
+// })
+
 Route.get('/login', 'AuthController.login')
 
 Route.post('/webhook', 'AuthController.webhook')
 
-Route.get('/me', 'User/UsersController.index').middleware('auth')
+Route.get('/me', 'User/UsersController.index').middleware(['auth', 'active'])
 
 Route.delete('/logout', async ({ session, auth }) => {
   session.forget('current_uuid')
   await auth.use('web').logout()
   return { success: true }
-}).middleware('auth')
+}).middleware(['auth', 'active'])
 
 Route.group(() => {
   Route.group(() => {
@@ -93,13 +110,15 @@ Route.group(() => {
     Route.delete('/:supported_nft', 'Admin/SupportedNftsController.delete')
   }).prefix('/supported_nfts')
 })
-  .middleware('auth')
+  .middleware(['auth', 'active'])
   .prefix('/admin')
 
 Route.group(() => {
   Route.get('/me', 'User/UsersController.index')
   Route.post('/update', 'User/UsersController.update')
   Route.post('/payment/:credit', 'User/PaymentController.payment')
+  Route.post('creditPayment/:credit', 'User/PaymentController.creditPayment')
+  Route.post('subscriptionPayment/:subscription', 'User/PaymentController.subscriptionPayment')
 
   Route.group(() => {
     Route.post('/send_message/:conversation', 'User/TwilioController.sendMessage')
@@ -111,5 +130,11 @@ Route.group(() => {
     )
   }).prefix('/twilio')
 })
-  .middleware('auth')
+  .middleware(['auth', 'active'])
   .prefix('/user')
+
+Route.group(() => {
+  Route.get('/credits', 'Admin/CreditsController.index')
+  Route.get('/supported_nfts', 'Admin/SupportedNftsController.index')
+  Route.get('/subscriptions', 'Admin/SubscriptionsController.index')
+}).middleware(['auth', 'active'])

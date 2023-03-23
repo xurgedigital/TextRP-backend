@@ -35,7 +35,11 @@ export default class UsersController {
   @bind()
   public async update({ request, response }: HttpContextContract, user: User) {
     const updateUserSchema = schema.create({
-      name: schema.string(),
+      name: schema.string.optional(),
+      isActive: schema.boolean.optional(),
+      textRpUsername: schema.string.optional(),
+      about: schema.string.optional(),
+      profile_picture: schema.string.optional(),
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
