@@ -30,6 +30,9 @@ export default class UsersController {
     }
     const updateUserSchema = schema.create({
       name: schema.string(),
+      textRpUsername: schema.string(),
+      about: schema.string(),
+      profile_picture: schema.string(),
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
