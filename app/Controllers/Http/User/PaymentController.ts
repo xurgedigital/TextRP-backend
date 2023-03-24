@@ -5,6 +5,7 @@ import { bind } from '@adonisjs/route-model-binding'
 import Payment from 'App/Models/Payment'
 import XummService from 'App/Services/XummService'
 import PlatformSetting from 'App/Models/PlatformSetting'
+import Logger from '@ioc:Adonis/Core/Logger'
 
 export enum PaymentTypeEnum {
   CREDIT = 'CREDIT',
@@ -43,7 +44,7 @@ export default class PaymentController {
     await authUser?.load('discount')
 
     const discoutAmount = (authUser?.discount?.discount || 0) / 100
-    const amount = paymentAmount - paymentAmount * discoutAmount
+    const amount = (paymentAmount - paymentAmount * discoutAmount) * 10 ** 6
     const ping = await XummService.sdk.payload.create({
       txjson: {
         TransactionType: 'Payment',
@@ -51,6 +52,7 @@ export default class PaymentController {
         Amount: amount.toString(),
       },
     })
+    Logger.debug('Ping response', ping)
     const payload = {
       txjson: {
         TransactionType: 'Payment',
