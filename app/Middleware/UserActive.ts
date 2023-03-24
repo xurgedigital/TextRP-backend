@@ -5,7 +5,7 @@ export default class UserActive {
     await auth.use('web').authenticate()
     const user = await auth.use('web').user
     if (!user?.isActive) {
-      throw 'User is inactive'
+      throw new Error('User is inactive')
     }
     await next()
   }

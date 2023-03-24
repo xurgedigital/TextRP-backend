@@ -10,6 +10,7 @@ export enum PaymentTypeEnum {
   CREDIT = 'CREDIT',
   SUBSCRIPTION = 'SUBSCRIPTION',
 }
+
 export default class PaymentController {
   @bind()
   public async subscriptionPayment({ auth }: HttpContextContract, subscription: Subscription) {
@@ -36,7 +37,7 @@ export default class PaymentController {
       destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
         .value
     } catch (error) {
-      return 'Wallet not found in platform settings'
+      throw new Error('Wallet not found in platform settings')
     }
     const authUser = await auth.use('web').user
     await authUser?.load('discount')
@@ -47,7 +48,7 @@ export default class PaymentController {
       txjson: {
         TransactionType: 'Payment',
         Destination: destination,
-        Amount: amount,
+        Amount: amount.toString(),
       },
     })
     const payload = {
@@ -58,7 +59,7 @@ export default class PaymentController {
       },
     }
     if (!ping?.uuid) {
-      return 'UUID not returned by xumm'
+      throw new Error('UUID not returned by xumm')
     }
     await Payment.firstOrCreate(
       {
