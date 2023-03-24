@@ -6,6 +6,7 @@ import Payment from 'App/Models/Payment'
 import XummService from 'App/Services/XummService'
 import PlatformSetting from 'App/Models/PlatformSetting'
 import Logger from '@ioc:Adonis/Core/Logger'
+import { XummPostPayloadBodyJson } from 'xumm-sdk/dist/src/types/xumm-api'
 
 export enum PaymentTypeEnum {
   CREDIT = 'CREDIT',
@@ -45,21 +46,22 @@ export default class PaymentController {
 
     const discoutAmount = (authUser?.discount?.discount || 0) / 100
     const amount = (paymentAmount - paymentAmount * discoutAmount) * 10 ** 6
-    const ping = await XummService.sdk.payload.create({
+    const payload: XummPostPayloadBodyJson = {
       txjson: {
         TransactionType: 'Payment',
         Destination: destination,
         Amount: amount.toString(),
       },
-    })
-    Logger.debug('Ping response', ping)
-    const payload = {
-      txjson: {
-        TransactionType: 'Payment',
-        Destination: destination,
-        Amount: amount,
-      },
     }
+    const ping = await XummService.sdk.payload.create(payload)
+    Logger.debug(
+      {
+        ping,
+        payload,
+        discoutAmount,
+      },
+      'Ping response with payload'
+    )
     if (!ping?.uuid) {
       throw new Error('UUID not returned by xumm')
     }
