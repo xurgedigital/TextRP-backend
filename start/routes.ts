@@ -30,23 +30,6 @@ Route.get('/mock-login', async ({ auth }) => {
   return { me: user }
 })
 
-// Route.get('/mock-create', async ({ auth }) => {
-//   const tempUser = await User.create({
-//     name: 'taeamp',
-//     address: 'asaadasd',
-//     textRpUsername: 'useranma',
-//     about: 'asaad',
-//     isActive: true,
-//     profile_picture: '',
-//   })
-//   await tempUser.load('credit')
-//   return { tempUser }
-
-//   // const user = await User.firstOrFail()
-//   // await auth.use('web').login(user)
-//   // return { me: user }
-// })
-
 Route.get('/login', 'AuthController.login')
 
 Route.post('/webhook', 'AuthController.webhook')
@@ -116,8 +99,20 @@ Route.group(() => {
 Route.group(() => {
   Route.get('/me', 'User/UsersController.index')
   Route.post('/update', 'User/UsersController.update')
+  Route.post('/payment/:credit', 'User/PaymentController.payment')
   Route.post('creditPayment/:credit', 'User/PaymentController.creditPayment')
   Route.post('subscriptionPayment/:subscription', 'User/PaymentController.subscriptionPayment')
+
+  Route.group(() => {
+    Route.post('/send_message/:conversation', 'User/TwilioController.sendMessage')
+    Route.post('/create_conversation', 'User/TwilioController.createConversation')
+    Route.post('/start_conversation/:conversation', 'User/TwilioController.startConversation')
+    Route.get(
+      '/get_all_messages/:conversation',
+      'User/TwilioController.getAllMessagesFromConversation'
+    )
+    Route.get('/mark_message_as_read/:message', 'User/TwilioController.markMessageAsRead')
+  }).prefix('/twilio')
 })
   .middleware(['auth', 'active'])
   .prefix('/user')

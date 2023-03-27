@@ -11,6 +11,7 @@ import {
 import UserCredit from 'App/Models/UserCredit'
 import Discount from 'App/Models/Discount'
 import UserSubscription from 'App/Models/UserSubscription'
+import Identifiers from './Identifiers'
 import PlatformSetting from './PlatformSetting'
 
 export default class User extends BaseModel {
@@ -58,6 +59,12 @@ export default class User extends BaseModel {
     foreignKey: 'address',
   })
   public discount: HasOne<typeof Discount>
+
+  @hasOne(() => Identifiers, {
+    localKey: 'id',
+    foreignKey: 'userId',
+  })
+  public identifiers: HasOne<typeof Identifiers>
 
   @hasMany(() => UserSubscription, {})
   public subscriptions: HasMany<typeof UserSubscription>
