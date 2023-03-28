@@ -1,8 +1,9 @@
+import NotFoundException from 'App/Exceptions/NotFoundException'
+import Logger from '@ioc:Adonis/Core/Logger'
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Twilio from 'twilio'
 import TwilioConfig from 'Config/twilio'
 import User from 'App/Models/User'
-import { bind } from '@adonisjs/route-model-binding'
 import Conversations from 'App/Models/Conversations'
 import UserMessages from 'App/Models/UserMessages'
 import Identifiers from 'App/Models/Identifiers'
@@ -10,6 +11,9 @@ import Participants from 'App/Models/Participants'
 import Ws from 'App/Services/Ws'
 import UserMessagesReads from 'App/Models/UserMessageRead'
 import { DateTime } from 'luxon'
+import UnProcessableException from 'App/Exceptions/UnProcessableException'
+import AuthorizationException from 'App/Exceptions/AuthorizationException'
+import InternalException from 'App/Exceptions/InternalException'
 
 export enum MessageTypeEnum {
   TEXT = 'TEXT',
@@ -49,21 +53,44 @@ export default class TwilioController {
       console.log(error)
     }
   }
-  @bind()
-  public async sendMessage(
-    { auth, request, response }: HttpContextContract,
-    conversation: Conversations
-  ) {
+
+  public async sendMessage({ auth, request, response, params }: HttpContextContract) {
     const authUser = await auth.use('web').user
     if (!authUser) {
-      return response.status(404).json({ error: 'Auth user not found!' })
+      throw new AuthorizationException('Unauthorized Access!')
+    }
+    if (!params.conversation) {
+      throw new UnProcessableException('Please provide conversation in params!')
+    }
+    const conversation = await Conversations.find(params.conversation)
+    if (!conversation) {
+      throw new NotFoundException('Conversation Not found!')
     }
     const { message } = request.body()
+    if (!message) {
+      throw new UnProcessableException('Please send a message in the body!')
+    }
+    await authUser.load('identifiers')
+    if (!authUser.identifiers) {
+      throw new UnProcessableException('Loggedin user dosent have an identifier!')
+    }
+    await conversation.load('participants', (participants) => {
+      participants.where('identifierId', authUser.identifiers.id)
+    })
+
+    if (!conversation.participants || !conversation.participants.length) {
+      throw new UnProcessableException('Loggedin user is not in this conversation!')
+    }
     const messageResponse = await this.client.conversations.v1
       .conversations(conversation.platformConverstionId)
       .messages.create({ author: authUser.name, body: message })
+      .catch((error) => {
+        Logger.error(error)
+        throw new UnProcessableException('An error occoured from twilio while creating messages!')
+      })
     const userMessage = await UserMessages.create({
       conversationId: conversation.id,
+      messageUuid: messageResponse.sid,
       messageType: MessageTypeEnum.TEXT,
       content: message,
       senderId: authUser.id,
@@ -74,16 +101,23 @@ export default class TwilioController {
     return response.json(messageResponse)
   }
 
-  @bind()
-  public async getAllMessagesFromConversation(
-    { response }: HttpContextContract,
-    conversation: Conversations
-  ) {
-    const messageResponse = await this.client.conversations.v1
-      .conversations(conversation.platformConverstionId)
-      .messages.list({ limit: 20 })
+  public async getAllMessagesFromConversation({ response, params }: HttpContextContract) {
+    try {
+      if (!params.conversation) {
+        throw new UnProcessableException('Please provide conversation in params!')
+      }
+      const conversation = await Conversations.find(params.conversation)
+      if (!conversation) {
+        throw new NotFoundException('Conversation Not found!')
+      }
+      const messageResponse = await this.client.conversations.v1
+        .conversations(conversation.platformConverstionId)
+        .messages.list({ limit: 20 })
 
-    return response.json(messageResponse)
+      return response.json(messageResponse)
+    } catch (error) {
+      throw new UnProcessableException('An error occoured from twilio while fetching messages!')
+    }
   }
 
   public async recieveMessage({}: HttpContextContract) {
@@ -115,14 +149,24 @@ export default class TwilioController {
   public async createConversation({ auth, request, response }: HttpContextContract) {
     const authUser = await auth.use('web').user
     if (!authUser) {
-      return response.status(404).json({ error: 'Auth user not found!' })
+      throw new AuthorizationException('Unauthorized Access!')
     }
     const { conversationName } = request.body()
+    if (!conversationName) {
+      throw new UnProcessableException('Please provide a name to your conversation!')
+    }
     const authUserIdentifier = await this.fetchOrCreateUserIdentifier(authUser)
 
-    const conversationResponse = await this.client.conversations.v1.conversations.create({
-      friendlyName: conversationName,
-    })
+    const conversationResponse = await this.client.conversations.v1.conversations
+      .create({
+        friendlyName: conversationName,
+      })
+      .catch((error) => {
+        Logger.error(error)
+        throw new UnProcessableException(
+          'An error occoured from twilio while creating conversation!'
+        )
+      })
     const conversation = await Conversations.create({
       identifierId: authUserIdentifier.id,
       creatorId: authUser.id,
@@ -139,18 +183,24 @@ export default class TwilioController {
       conversation,
       participantAttribute
     )
-    return response.json(conversationParticipant)
+    return response.json({ conversationParticipant, conversation })
   }
 
-  @bind()
-  public async startConversation(
-    { request, response }: HttpContextContract,
-    conversations: Conversations
-  ) {
+  public async startConversation({ request, response, params }: HttpContextContract) {
+    if (!params.conversation) {
+      throw new UnProcessableException('Please provide conversation in params!')
+    }
+    const conversations = await Conversations.find(params.conversation)
+    if (!conversations) {
+      throw new NotFoundException('Conversation Not found!')
+    }
     const { walletAddress } = request.body()
+    if (!walletAddress) {
+      throw new NotFoundException('Reciver wallet address not found!')
+    }
     const receiverUser = await User.query().where('address', walletAddress).first()
     if (!receiverUser) {
-      return response.status(404).json({ error: 'Reciver wallet address not found!' })
+      throw new NotFoundException('Reciver not found!')
     }
     const receiverUserIdentifier = await this.fetchOrCreateUserIdentifier(receiverUser)
     const participantAttribute: ParticipantAttribute = {
@@ -171,15 +221,23 @@ export default class TwilioController {
     if (user.identifiers) {
       return user.identifiers
     }
-    const conversationUser = await this.client.conversations.v1.users.create({
-      identity: user.address,
-    })
-    return await Identifiers.create({
-      uuid: conversationUser.sid,
-      address: user.address,
-      serviceName: ServiceNameEnum.TWILIO,
-      userId: user.id,
-    })
+    try {
+      const conversationUser = await this.client.conversations.v1.users.create({
+        identity: user.address,
+      })
+      if (!conversationUser.sid) {
+        throw 'sid not returned from twilio'
+      }
+      return await Identifiers.create({
+        uuid: conversationUser.sid,
+        address: user.address,
+        serviceName: ServiceNameEnum.TWILIO,
+        userId: user.id,
+      })
+    } catch (error) {
+      Logger.error(error)
+      throw new UnProcessableException('An error occoured from twilio while creating user!')
+    }
   }
 
   public async addParticipantToConversation(
@@ -207,27 +265,41 @@ export default class TwilioController {
         .emit('newUserAddedToConversation', { userName: participantAttribute.name })
       return { conversationParticipant, conversationWebhook }
     } catch (error) {
-      console.log(error)
+      Logger.info(error)
+      throw new UnProcessableException(
+        'An error occoured from twilio while adding participant to conversation!'
+      )
     }
   }
 
-  @bind()
-  public async markMessageAsRead({ auth, response }: HttpContextContract, message: UserMessages) {
-    const authUser = await auth.use('web').user
-    if (!authUser) {
-      return response.status(404).json({ error: 'Auth user not found!' })
-    }
-    const userMessagesReads = await UserMessagesReads.query()
-      .where('userMessageId', message.id)
-      .andWhere('userId', authUser.id)
-
-    if (!userMessagesReads) {
-      await UserMessagesReads.find({
+  public async markMessageAsRead({ auth, response, params }: HttpContextContract) {
+    try {
+      const authUser = await auth.use('web').user
+      if (!authUser) {
+        throw new AuthorizationException('Unauthorized Access!')
+      }
+      if (!params.message) {
+        throw new UnProcessableException('Please provide messageId in params!')
+      }
+      const message = await UserMessages.find(params.message)
+      if (!message) {
+        throw new NotFoundException('User Message Not found!')
+      }
+      const userMessagesReads = await UserMessagesReads.query()
+        .where('userMessageId', message.id)
+        .andWhere('userId', authUser.id)
+      if (userMessagesReads.length > 0) {
+        throw new UnProcessableException('User has already read the message!')
+      }
+      const readtMeta = await UserMessagesReads.create({
         readAt: DateTime.now(),
         userMessageId: message.id,
         userId: authUser.id,
       })
+      return response.json({ readtMeta, readBy: authUser })
+    } catch (error) {
+      Logger.info(error)
+      throw new InternalException('Something went wrong')
     }
-    return response.json({ readBy: authUser })
   }
 }

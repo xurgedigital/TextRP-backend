@@ -20,7 +20,9 @@ Ws.io
           .catch((e) => next(e))
       }
     } else {
-      next(new Error('Authentication error'))
+      // next(new Error('Authentication error'))
+      // keeping no authentication untill demo
+      next()
     }
   })
   .on('connection', SocketController.handleSocketEvents)
