@@ -70,6 +70,17 @@ export default class TwilioController {
     if (!message) {
       throw new UnProcessableException('Please send a message in the body!')
     }
+    await authUser.load('identifiers')
+    if (!authUser.identifiers) {
+      throw new UnProcessableException('Loggedin user dosent have an identifier!')
+    }
+    await conversation.load('participants', (participants) => {
+      participants.where('identifierId', authUser.identifiers.id)
+    })
+
+    if (!conversation.participants || !conversation.participants.length) {
+      throw new UnProcessableException('Loggedin user is not in this conversation!')
+    }
     const messageResponse = await this.client.conversations.v1
       .conversations(conversation.platformConverstionId)
       .messages.create({ author: authUser.name, body: message })

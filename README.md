@@ -44,3 +44,36 @@
         c. 'User Message Not found!': The messageId provided has no matching data.
         d. 'User has already read the message!': If user has already read it.
         e. 'Something went wrong': If something went wrong with the server
+
+2. Socket
+   Events:
+      a. joinConversation: 
+         Emit event to this and send conversationId ex: socket.emit('joinConversation',3). Here 3 is sent as the conversationId. 
+         The socket user will join the channel/room name conversation.platformId (ex: CHc801c52673f342c9afb15cd52106e990) provided by twilio.
+      b. joinedChannel: 
+         Listen to this event, once joinConversation is executed succesfuly, you will recieve a conversation instance on this event.
+         Example response:
+         socket.on('joinedChannel',payload)
+         payload = {
+               "id": 4,
+               "identifier_id": "4",
+               "creator_id": "3",
+               "platform_converstion_id": "CHe7f14cff6c544a99bc1816780c50bf18",
+               "created_at": "2023-03-28T20:26:04.771+05:30",
+               "updated_at": "2023-03-28T20:26:04.771+05:30",
+               "name": "Crediaat 2"
+            }
+      c. messageNotification:
+         Socket rooms/channels are created on conversation.platformId (ex: CHc801c52673f342c9afb15cd52106e990). 
+         When the user has joined the channel,
+         messageNotification is an event that is emitted in the channel when user sends message in the channel.
+         
+      d. error:
+         Listen to this event for any errors that will be emitted during the execution of any socket event.
+
+   To listen to new messages:
+      Emit joinConversation conversationId
+      Listen joinedChannel
+      Listen messageNotification
+      Send message in the channel
+      

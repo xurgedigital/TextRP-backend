@@ -20,6 +20,18 @@ interface UserMessagesReadInterface {
 
 class SocketController {
   public async handleSocketEvents(socket: Socket) {
+    socket.on('joinConversation', async (conversationId: string) => {
+      const conversation = await Conversations.find(conversationId)
+      if (!conversation) {
+        return socket.emit('error', {
+          eventType: 'messageNotification',
+          message: 'Converstion not found',
+        })
+      }
+      socket.join(conversation.platformConverstionId)
+      socket.emit('joinedChannel', conversation)
+    })
+
     socket.on('messageNotification', async (messageData: MessageData) => {
       const conversation = await Conversations.find(messageData.conversationId)
       if (!conversation) {
