@@ -104,6 +104,7 @@ Route.group(() => {
   Route.post('subscriptionPayment/:subscription', 'User/PaymentController.subscriptionPayment')
 
   Route.group(() => {
+    Route.post('/token', 'User/TwilioController.generateToken')
     Route.post('/send_message/:conversation', 'User/TwilioController.sendMessage')
     Route.post('/create_conversation', 'User/TwilioController.createConversation')
     Route.post('/start_conversation/:conversation', 'User/TwilioController.startConversation')

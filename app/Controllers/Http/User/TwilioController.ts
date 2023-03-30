@@ -29,13 +29,35 @@ interface ParticipantAttribute {
   uuid: string
   name: string
 }
-export interface TwilioConfigType {
-  TWILIO_ACCOUNT_SID: string
-  TWILIO_AUTH_TOKEN: string
-  WEBHOOK_URL: string
-}
+
 export default class TwilioController {
   private client = Twilio(TwilioConfig.TWILIO_ACCOUNT_SID, TwilioConfig.TWILIO_AUTH_TOKEN)
+
+  public async generateToken({ auth, response }: HttpContextContract) {
+    const authUser = await auth.use('web').user
+    if (!authUser) return response.status(401)
+    let AccessToken = Twilio.jwt.AccessToken
+
+    let token = new AccessToken(
+      TwilioConfig.TWILIO_ACCOUNT_SID,
+      TwilioConfig.TWILIO_API_KEY_SID,
+      TwilioConfig.TWILIO_API_KEY_SECRET,
+      {
+        identity: authUser.address,
+        ttl: 3600,
+      }
+    )
+
+    let grant = new AccessToken.ChatGrant({ serviceSid: TwilioConfig.TWILIO_CHAT_SERVICE_SID })
+    if (TwilioConfig.TWILIO_PUSH_CREDENTIAL_SID) {
+      // Optional: without it, no push notifications will be sent
+      grant.pushCredentialSid = TwilioConfig.TWILIO_PUSH_CREDENTIAL_SID
+    }
+    token.addGrant(grant)
+    return response.json({
+      jwt: token.toJwt(),
+    })
+  }
 
   public async configureConversationWebHook(conversationId: string) {
     try {
