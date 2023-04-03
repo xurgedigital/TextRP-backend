@@ -11,7 +11,7 @@ tmp
 .idea
 
 # Additional good to have ignores for dockerignore
-Dockerfile*
+#Dockerfile*
 docker-compose*
 .dockerignore
 *.md
