@@ -39,6 +39,30 @@ export default class PlatformSettingsController {
     return response.json(user)
   }
 
+  public async bulkCreateOrUpdate({ request, response }: HttpContextContract) {
+    const updateUserSchema = schema.create({
+      settings: schema.array().members(
+        schema.object().members({
+          key: schema.string(),
+          value: schema.string(),
+        })
+      ),
+    })
+
+    const payload = await request.validate({ schema: updateUserSchema })
+    payload.settings.forEach((setting) => {
+      PlatformSetting.updateOrCreate(
+        {
+          key: setting.key,
+        },
+        {
+          value: setting.value,
+        }
+      )
+    })
+    return response.json(payload.settings)
+  }
+
   @bind()
   public async delete({ response }: HttpContextContract, user: PlatformSetting) {
     await user.delete()

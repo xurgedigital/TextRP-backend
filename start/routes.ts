@@ -31,6 +31,7 @@ Route.get('/mock-login', async ({ auth }) => {
 })
 
 Route.get('/login', 'AuthController.login')
+Route.post('/chat-webhook', 'WebHook/WebhookController.update')
 
 Route.post('/webhook', 'AuthController.webhook')
 
@@ -75,6 +76,7 @@ Route.group(() => {
   Route.group(() => {
     Route.get('/', 'Admin/PlatformSettingsController.index')
     Route.post('/', 'Admin/PlatformSettingsController.create')
+    Route.post('/bulk', 'Admin/PlatformSettingsController.bulkCreateOrUpdate')
     Route.post('/:platform_setting', 'Admin/PlatformSettingsController.update')
     Route.delete('/:platform_setting', 'Admin/PlatformSettingsController.delete')
   }).prefix('/platform_settings')

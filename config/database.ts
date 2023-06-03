@@ -105,6 +105,22 @@ const databaseConfig: DatabaseConfig = {
       healthCheck: false,
       debug: false,
     },
+
+    synapse: {
+      client: 'pg',
+      connection: {
+        host: Env.get('SPG_HOST'),
+        port: Env.get('SPG_PORT'),
+        user: Env.get('SPG_USER'),
+        password: Env.get('SPG_PASSWORD', ''),
+        database: Env.get('SPG_DB_NAME'),
+      },
+      migrations: {
+        naturalSort: true,
+      },
+      healthCheck: false,
+      debug: false,
+    },
   },
 }
 

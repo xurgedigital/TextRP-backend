@@ -7,6 +7,7 @@ import Env from '@ioc:Adonis/Core/Env'
 import User from 'App/Models/User'
 import Payment from 'App/Models/Payment'
 import UserCredit from 'App/Models/UserCredit'
+import Logger from '@ioc:Adonis/Core/Logger'
 
 export interface WebhookData {
   meta: Meta
@@ -50,9 +51,11 @@ export interface UserTokenInterface {
 }
 
 export interface PaymentPayload {
-  TransactionType: string
-  Destination: string
-  Amount: number
+  txjson: {
+    TransactionType: string
+    Destination: string
+    Amount: number
+  }
 }
 
 export default class AuthController {
@@ -91,6 +94,7 @@ export default class AuthController {
     )
     return { data: ping }
   }
+
   public async webhook({ request, response }) {
     const timestamp = request.header('x-xumm-request-timestamp') || ''
     const data = <WebhookData>request.body()
@@ -104,7 +108,18 @@ export default class AuthController {
       'Invalid Signature',
       401
     )
-    const payload = await XummService.sdk.payload.get(data.payloadResponse.payload_uuidv4)
+    const payload = await XummService.sdk.payload.get('2249591b-4a46-4c5a-bd9c-1646d0628757')
+    Logger.debug('Payload', {
+      payload,
+    })
+    if (payload?.response?.account && payload?.payload?.tx_type === 'SignIn') {
+      await User.firstOrCreate(
+        {
+          address: payload?.response?.account,
+        },
+        {}
+      )
+    }
     if (data.userToken && payload?.response?.account && payload?.payload?.tx_type !== 'Payment') {
       await User.firstOrCreate(
         {
@@ -123,7 +138,7 @@ export default class AuthController {
         }
       )
     }
-    if (payload?.payload?.tx_type !== 'Payment') {
+    if (payload?.payload?.tx_type === 'Payment') {
       const payloadUUID = payload?.meta?.uuid
       const paymentRepository = await Payment.findBy('uuid', payloadUUID)
       try {
@@ -132,8 +147,8 @@ export default class AuthController {
         }
         const paymentPayload: PaymentPayload = JSON.parse(paymentRepository.payload)
         if (
-          paymentPayload.Destination === payload?.payload?.request_json?.Destination &&
-          payload?.payload?.request_json?.Amount === paymentPayload.Amount
+          paymentPayload.txjson.Destination === payload?.payload?.request_json?.Destination &&
+          String(payload?.payload?.request_json?.Amount) === String(paymentPayload.txjson.Amount)
         ) {
           const userCredit = await UserCredit.query()
             .where('userId', paymentRepository.userId)
