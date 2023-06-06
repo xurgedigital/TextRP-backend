@@ -51,12 +51,12 @@ Route.group(() => {
     Route.post('/:user', 'Admin/UsersController.update')
     Route.post('/:user/create_credit', 'Admin/UsersController.createCredit')
     Route.post('/:user/credits/:credit', 'Admin/UsersController.updateCredit')
-    Route.post('/:user/create_discount', 'Admin/UsersController.updateDiscount')
-    Route.post('/:user/discounts/:discount', 'Admin/UsersController.createDiscount')
-    Route.post('/:user/create_subscription', 'Admin/UsersController.updateSubscription')
+    Route.post('/:user/create_discount', 'Admin/UsersController.createDiscount')
+    Route.post('/:user/discounts/:discount', 'Admin/UsersController.updateDiscount')
+    Route.post('/:user/create_subscription', 'Admin/UsersController.createSubscription')
     Route.post(
       '/:user/user_subscriptions/:user_subscription',
-      'Admin/UsersController.createSubscription'
+      'Admin/UsersController.updateSubscription'
     )
   }).prefix('/users')
 

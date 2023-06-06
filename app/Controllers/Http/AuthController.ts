@@ -8,6 +8,10 @@ import User from 'App/Models/User'
 import Payment from 'App/Models/Payment'
 import UserCredit from 'App/Models/UserCredit'
 import Logger from '@ioc:Adonis/Core/Logger'
+import Credit from 'App/Models/Credit'
+import Subscription from 'App/Models/Subscription'
+import UserSubscription from 'App/Models/UserSubscription'
+import moment from 'moment'
 
 export interface WebhookData {
   meta: Meta
@@ -108,7 +112,7 @@ export default class AuthController {
       'Invalid Signature',
       401
     )
-    const payload = await XummService.sdk.payload.get('2249591b-4a46-4c5a-bd9c-1646d0628757')
+    const payload = await XummService.sdk.payload.get(data.payloadResponse.payload_uuidv4)
     Logger.debug('Payload', {
       payload,
     })
@@ -150,27 +154,38 @@ export default class AuthController {
           paymentPayload.txjson.Destination === payload?.payload?.request_json?.Destination &&
           String(payload?.payload?.request_json?.Amount) === String(paymentPayload.txjson.Amount)
         ) {
-          const userCredit = await UserCredit.query()
-            .where('userId', paymentRepository.userId)
-            .first()
-          if (!userCredit) {
-            return response.status(422).json({ error: 'User Credit data not found!' })
-          }
           if (paymentRepository.paymenttableType === PaymentTypeEnum.CREDIT) {
-            await paymentRepository.load('credit')
-            userCredit.balance = userCredit.balance + paymentRepository.credit.available_credits
-          } else if (paymentRepository.paymenttableType === PaymentTypeEnum.SUBSCRIPTION) {
-            await paymentRepository.load('subscription')
+            const userCredit = await UserCredit.firstOrCreate({
+              userId: paymentRepository.userId,
+            })
+            const credit = await Credit.findOrFail(paymentRepository.paymenttableId)
             userCredit.balance =
-              userCredit.balance + paymentRepository.subscription.available_credits
+              parseFloat(String(userCredit.balance)) + parseFloat(String(credit.available_credits))
+            await userCredit.save()
+          } else if (paymentRepository.paymenttableType === PaymentTypeEnum.SUBSCRIPTION) {
+            const subscription = await Subscription.findOrFail(paymentRepository.paymenttableId)
+            let months = 1
+            if (subscription.name.includes('quarterly')) {
+              months = 3
+            } else if (subscription.name.includes('semi-annually')) {
+              months = 6
+            } else if (subscription.name.includes('annually')) {
+              months = 12
+            }
+            await UserSubscription.create({
+              userId: paymentRepository.userId,
+              subscriptionId: subscription.id,
+              expires_at: DateTime.fromJSDate(moment().add(months, 'months').toDate()),
+            })
           }
-          await userCredit.save()
         }
       } catch (error) {
         if (paymentRepository) {
-          paymentRepository.errorDetails = error
-          await paymentRepository.save()
+          // paymentRepository.errorDetails = error
+          // await paymentRepository.save()
         }
+        console.error('Error while webhook', error)
+        Logger.error({ error }, 'Error while webhook')
         return response.status(500)
       }
     }
