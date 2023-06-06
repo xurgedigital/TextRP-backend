@@ -34,7 +34,7 @@ Route.get('/login', 'AuthController.login')
 Route.post('/chat-webhook', 'WebHook/WebhookController.update')
 
 Route.post('/webhook', 'AuthController.webhook')
-Route.get('/check-nft/:address/:network', 'NFTController.check')
+Route.get('/check-nft/:address/:network/:service', 'NFTController.check')
 
 Route.get('/me', 'User/UsersController.index').middleware(['auth', 'active'])
 

@@ -20,6 +20,7 @@ export default class NFTController {
       address = externalUser.externalId
     }
     const network = request.param('network', 'main')
+    const service = request.param('service')
     const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
       method: 'account_nfts',
       params: [
@@ -29,9 +30,7 @@ export default class NFTController {
         },
       ],
     })
-    if (res.result?.error) {
-      return response.status(404)
-    }
+    response.abortIf(res.result?.error, res.result?.error, 500)
     const internalNFTs = await SupportedNft.query()
       .whereIn(
         'contract_address',
@@ -41,6 +40,13 @@ export default class NFTController {
         'taxon',
         res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
       )
+    if (service) {
+      response.abortUnless(
+        internalNFTs.find((nft) => nft.description.includes(service)),
+        'Unauthorised',
+        403
+      )
+    }
     return response.json({
       nfts: internalNFTs.map((nft) => ({
         contract_address: nft.contract_address,
