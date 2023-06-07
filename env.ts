@@ -56,6 +56,8 @@ export default Env.rules({
   XUMM_APIKEY: Env.schema.string(),
   XUMM_APISECRET: Env.schema.string(),
 
+  VERIFY_NFT: Env.schema.boolean.optional(),
+
   DISCORD_CLIENT_ID: Env.schema.string.optional(),
   DISCORD_CLIENT_SECRET: Env.schema.string.optional(),
 
