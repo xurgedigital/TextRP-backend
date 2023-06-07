@@ -10,6 +10,37 @@ export enum NETWORKS {
 }
 
 export default class NFTController {
+  public static async verifyHolding(address: string, service: string): Promise<boolean> {
+    let addressA = address
+    if (addressA.length !== 34) {
+      const externalUser = await UserExternalId.query()
+        .where('user_id', addressA)
+        .where('auth_provider', 'oidc-xumm')
+        .firstOrFail()
+      addressA = externalUser.externalId
+    }
+    const { data: res } = await axios.post(NETWORKS.MAIN, {
+      method: 'account_nfts',
+      params: [
+        {
+          account: addressA,
+          ledger_index: 'validated',
+        },
+      ],
+    })
+    if (res.result?.error) return false
+    const internalNFTs = await SupportedNft.query()
+      .whereIn(
+        'contract_address',
+        res.result.account_nfts.map((nft) => nft.Issuer)
+      )
+      .whereIn(
+        'taxon',
+        res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
+      )
+    return !!internalNFTs.find((nft) => nft.description.includes(service))
+  }
+
   public async check({ request, response }: HttpContextContract) {
     let address = request.param('address')
     if (address.length !== 34) {

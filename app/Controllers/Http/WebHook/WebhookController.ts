@@ -6,6 +6,7 @@ import UserCredit from 'App/Models/UserCredit'
 import Database from '@ioc:Adonis/Lucid/Database'
 import UserExternalId from 'App/Models/UserExternalId'
 import PlatformSetting from 'App/Models/PlatformSetting'
+import NFTController from 'App/Controllers/Http/NFTController'
 
 export default class WebhookController {
   public async update({ request, response }: HttpContextContract) {
@@ -27,6 +28,8 @@ export default class WebhookController {
       address = externalUser.externalId
     }
     console.log('new address', address)
+    const verified = await NFTController.verifyHolding(address, payload.service)
+    if (!verified) response.status(403)
     const user = await UserCredit.query()
       .whereHas('user', (q) => q.where('address', address))
       .firstOrFail()
