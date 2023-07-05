@@ -24,6 +24,9 @@ import User from 'App/Models/User'
 Route.get('/', async () => {
   return { hello: 'You have found me now do you know what to do?' }
 })
+Route.get('/available-features', async () => {
+  return { features: ['twilio', 'discord', 'twitter', 'dark_mode'] }
+})
 Route.get('/mock-login', async ({ auth }) => {
   const user = await User.firstOrFail()
   await auth.use('web').login(user)

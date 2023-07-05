@@ -14,6 +14,9 @@ export default class SupportedNft extends BaseModel {
   @column({})
   public description: string
 
+  @column({ serialize: (v) => JSON.parse(v), prepare: (v) => JSON.stringify(v) })
+  public features: string[]
+
   @column({})
   public taxon: string
 

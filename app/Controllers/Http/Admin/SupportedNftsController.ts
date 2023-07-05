@@ -30,6 +30,7 @@ export default class SupportedNftsController {
       title: schema.string(),
       description: schema.string(),
       contract_address: schema.string(),
+      features: schema.array().members(schema.string()),
       taxon: schema.string(),
     })
 
@@ -44,6 +45,7 @@ export default class SupportedNftsController {
       title: schema.string(),
       description: schema.string(),
       contract_address: schema.string(),
+      features: schema.array().members(schema.string()),
       taxon: schema.string(),
     })
 

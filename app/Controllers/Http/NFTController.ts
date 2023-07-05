@@ -81,9 +81,10 @@ export default class NFTController {
     return response.json({
       nfts: internalNFTs.map((nft) => ({
         contract_address: nft.contract_address,
-        discord: nft.description.toLowerCase().includes('discord'),
-        twitter: nft.description.toLowerCase().includes('twitter'),
-        twilio: nft.description.toLowerCase().includes('twilio'),
+        discord: nft.features.includes('discord'),
+        twitter: nft.features.includes('twitter'),
+        twilio: nft.features.includes('twilio'),
+        dark_mode: nft.features.includes('dark_mode'),
       })),
     })
   }
