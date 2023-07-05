@@ -28,8 +28,11 @@ export default class WebhookController {
       address = externalUser.externalId
     }
     console.log('new address', address)
-    const verified = await NFTController.verifyHolding(address, payload.service)
-    if (!verified) response.status(403)
+    const enableVerification = Env.get('VERIFY_NFT', false)
+    if (enableVerification) {
+      const verified = await NFTController.verifyHolding(address, payload.service)
+      if (!verified) response.status(403)
+    }
     const user = await UserCredit.query()
       .whereHas('user', (q) => q.where('address', address))
       .firstOrFail()
