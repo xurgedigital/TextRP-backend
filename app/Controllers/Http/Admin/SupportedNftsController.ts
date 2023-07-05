@@ -35,7 +35,10 @@ export default class SupportedNftsController {
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
-    const user = await SupportedNft.create(payload)
+    const user = await SupportedNft.create({
+      ...payload,
+      features: JSON.stringify(payload.features),
+    })
     return response.json(user)
   }
 
@@ -50,7 +53,10 @@ export default class SupportedNftsController {
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
-    user.merge(payload)
+    user.merge({
+      ...payload,
+      features: JSON.stringify(payload.features),
+    })
     await user.save()
     return response.json(user)
   }

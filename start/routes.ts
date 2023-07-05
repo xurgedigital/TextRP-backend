@@ -33,6 +33,10 @@ Route.get('/mock-login', async ({ auth }) => {
   return { me: user }
 })
 
+Route.group(() => {
+  Route.get('/', 'Admin/SupportedNftsController.index')
+}).prefix('/supported_nftss')
+
 Route.get('/login', 'AuthController.login')
 Route.post('/chat-webhook', 'WebHook/WebhookController.update')
 
