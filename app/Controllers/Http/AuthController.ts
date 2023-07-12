@@ -160,7 +160,8 @@ export default class AuthController {
             })
             const credit = await Credit.findOrFail(paymentRepository.paymenttableId)
             userCredit.balance =
-              parseFloat(String(userCredit.balance)) + parseFloat(String(credit.available_credits))
+              parseFloat(String(userCredit.balance || '0')) +
+                parseFloat(String(credit.available_credits)) || 0
             await userCredit.save()
           } else if (paymentRepository.paymenttableType === PaymentTypeEnum.SUBSCRIPTION) {
             const subscription = await Subscription.findOrFail(paymentRepository.paymenttableId)
