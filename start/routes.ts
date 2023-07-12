@@ -63,6 +63,10 @@ Route.get('/my-features/:address/:network', async ({ response, request }) => {
   return response.json({
     nfts: internalNFTs.map((nft) => ({
       contract_address: nft.contract_address,
+      NFTokenID: res.result.account_nfts.find(
+        // eslint-disable-next-line eqeqeq
+        (nft) => nft.Issuer === nft.contract_address && nft.NFTokenTaxon == nft.taxon
+      ),
       discord: nft.features.includes('discord'),
       twitter: nft.features.includes('twitter'),
       twilio: nft.features.includes('twilio'),
@@ -87,6 +91,16 @@ Route.post('/webhook', 'AuthController.webhook')
 Route.get('/check-nft/:address/:network/:service', 'NFTController.check')
 
 Route.get('/me', 'User/UsersController.index').middleware(['auth', 'active'])
+Route.get('/my-address/:address', async ({ request, response }) => {
+  let address = request.param('address')
+  const externalUser = await UserExternalId.query()
+    .where('user_id', address)
+    .where('auth_provider', 'oidc-xumm')
+    .firstOrFail()
+  return response.json({
+    address: externalUser.externalId,
+  })
+})
 
 Route.delete('/logout', async ({ session, auth }) => {
   session.forget('current_uuid')
