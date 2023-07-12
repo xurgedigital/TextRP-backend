@@ -20,12 +20,55 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 import User from 'App/Models/User'
+import UserExternalId from 'App/Models/UserExternalId'
+import axios from 'axios'
+import SupportedNft from 'App/Models/SupportedNft'
+import { NETWORKS } from 'App/Controllers/Http/NFTController'
 
 Route.get('/', async () => {
   return { hello: 'You have found me now do you know what to do?' }
 })
 Route.get('/available-features', async () => {
   return { features: ['twilio', 'discord', 'twitter', 'dark_mode'] }
+})
+Route.get('/my-features/:address/:network', async ({ response, request }) => {
+  let address = request.param('address')
+  if (address.length !== 34) {
+    const externalUser = await UserExternalId.query()
+      .where('user_id', address)
+      .where('auth_provider', 'oidc-xumm')
+      .firstOrFail()
+    address = externalUser.externalId
+  }
+  const network = request.param('network', 'main')
+  const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
+    method: 'account_nfts',
+    params: [
+      {
+        account: address,
+        ledger_index: 'validated',
+      },
+    ],
+  })
+  response.abortIf(res.result?.error, res.result?.error, 500)
+  const internalNFTs = await SupportedNft.query()
+    .whereIn(
+      'contract_address',
+      res.result.account_nfts.map((nft) => nft.Issuer)
+    )
+    .whereIn(
+      'taxon',
+      res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
+    )
+  return response.json({
+    nfts: internalNFTs.map((nft) => ({
+      contract_address: nft.contract_address,
+      discord: nft.features.includes('discord'),
+      twitter: nft.features.includes('twitter'),
+      twilio: nft.features.includes('twilio'),
+      dark_mode: nft.features.includes('dark_mode'),
+    })),
+  })
 })
 Route.get('/mock-login', async ({ auth }) => {
   const user = await User.firstOrFail()
