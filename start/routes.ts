@@ -63,6 +63,7 @@ Route.get('/my-features/:address/:network', async ({ response, request }) => {
   return response.json({
     nfts: internalNFTs.map((nft) => ({
       contract_address: nft.contract_address,
+      image_link: nft?.image_link,
       NFTokenID: res.result.account_nfts.find(
         // eslint-disable-next-line eqeqeq
         (nft) => nft.Issuer === nft.contract_address && nft.NFTokenTaxon == nft.taxon
