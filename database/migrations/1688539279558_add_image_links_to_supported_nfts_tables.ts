@@ -5,13 +5,13 @@ export default class extends BaseSchema {
 
   public async up() {
     this.schema.table(this.tableName, (table) => {
-      table.json('features').nullable()
+      table.string('image_link').nullable()
     })
   }
 
   public async down() {
     this.schema.table(this.tableName, (table) => {
-      table.dropColumn('features')
+      table.dropColumn('image_link')
     })
   }
 }

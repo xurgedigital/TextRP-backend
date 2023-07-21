@@ -32,6 +32,7 @@ export default class SupportedNftsController {
       contract_address: schema.string(),
       features: schema.array().members(schema.string()),
       taxon: schema.string(),
+      image_link: schema.string.optional(),
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
@@ -50,6 +51,7 @@ export default class SupportedNftsController {
       contract_address: schema.string(),
       features: schema.array().members(schema.string()),
       taxon: schema.string(),
+      image_link: schema.string.optional(),
     })
 
     const payload = await request.validate({ schema: updateUserSchema })

@@ -20,6 +20,9 @@ export default class SupportedNft extends BaseModel {
   @column({})
   public taxon: string
 
+  @column({})
+  public image_link: string
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 
