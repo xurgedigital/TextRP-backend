@@ -40,6 +40,7 @@ Route.group(() => {
 }).prefix('/supported_nftss')
 
 Route.get('/login-user', 'AuthController.loginUser')
+Route.post('/login-user', 'AuthController.loginUser')
 // Route.get('/login', 'AuthController.login')
 Route.post('/chat-webhook', 'WebHook/WebhookController.update')
 

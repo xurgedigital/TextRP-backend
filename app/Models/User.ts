@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import {
   afterCreate,
   BaseModel,
+  beforeSave,
   column,
   HasMany,
   hasMany,
@@ -13,6 +14,7 @@ import Discount from 'App/Models/Discount'
 import UserSubscription from 'App/Models/UserSubscription'
 import Identifiers from './Identifiers'
 import PlatformSetting from './PlatformSetting'
+import Hash from '@ioc:Adonis/Core/Hash'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -35,6 +37,9 @@ export default class User extends BaseModel {
 
   @column()
   public email: string | null
+
+  @column({ serializeAs: null })
+  public password: string
 
   @column()
   public isActive: boolean
@@ -68,6 +73,13 @@ export default class User extends BaseModel {
 
   @hasMany(() => UserSubscription, {})
   public subscriptions: HasMany<typeof UserSubscription>
+
+  @beforeSave()
+  public static async hashPassword(user: User) {
+    if (user.$dirty.password) {
+      user.password = await Hash.make(user.password)
+    }
+  }
 
   @afterCreate()
   public static async addBonus(user: User) {

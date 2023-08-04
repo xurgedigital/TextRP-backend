@@ -77,9 +77,11 @@ export default class AuthController {
     const password = request.input('password')
 
     try {
+      console.log(email, password)
       await auth.use('web').attempt(email, password)
       response.redirect('/admin')
-    } catch {
+    } catch (e) {
+      console.log(e)
       return response.badRequest('Invalid credentials')
     }
   }
