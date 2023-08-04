@@ -63,6 +63,27 @@ export interface PaymentPayload {
 }
 
 export default class AuthController {
+  public async loginUser({ auth, request, response }) {
+    try {
+      await auth.use('web').authenticate()
+      const user = await auth.use('web').user
+      if (!user?.isActive) {
+        throw 'User is inactive'
+      }
+      return { me: user }
+    } catch (e) {}
+
+    const email = request.input('email')
+    const password = request.input('password')
+
+    try {
+      await auth.use('web').attempt(email, password)
+      response.redirect('/admin')
+    } catch {
+      return response.badRequest('Invalid credentials')
+    }
+  }
+
   public async login({ session, auth }) {
     try {
       await auth.use('web').authenticate()

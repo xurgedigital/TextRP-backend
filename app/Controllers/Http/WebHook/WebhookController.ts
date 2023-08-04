@@ -12,7 +12,8 @@ export default class WebhookController {
   public async update({ request, response }: HttpContextContract) {
     const webhookPassword = Env.get('WEBHOOK_SECRET')
     const updateUserSchema = schema.create({
-      service: schema.enum(['discord', 'twitter'] as const),
+      service: schema.enum(['discord', 'twitter', 'twilio'] as const),
+      network: schema.string.nullable(),
       type: schema.enum(['receive', 'send'] as const),
       address: schema.string(),
       password: schema.string([rules.equalTo(webhookPassword)]),
@@ -30,7 +31,7 @@ export default class WebhookController {
     console.log('new address', address)
     const enableVerification = Env.get('VERIFY_NFT', false)
     if (enableVerification) {
-      const verified = await NFTController.verifyHolding(address, payload.service)
+      const verified = await NFTController.verifyHolding(address, payload.service, payload.network)
       if (!verified) response.status(403)
     }
     const user = await UserCredit.query()

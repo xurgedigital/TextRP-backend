@@ -19,11 +19,7 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
-import User from 'App/Models/User'
-import UserExternalId from 'App/Models/UserExternalId'
-import axios from 'axios'
-import SupportedNft from 'App/Models/SupportedNft'
-import { NETWORKS } from 'App/Controllers/Http/NFTController'
+import NFTController from 'App/Controllers/Http/NFTController'
 
 Route.get('/', async () => {
   return { hello: 'You have found me now do you know what to do?' }
@@ -32,82 +28,35 @@ Route.get('/available-features', async () => {
   return { features: ['twilio', 'discord', 'twitter', 'dark_mode'] }
 })
 Route.get('/my-features/:address/:network', async ({ response, request }) => {
-  let address = request.param('address')
-  if (address.length !== 34) {
-    const externalUser = await UserExternalId.query()
-      .where('user_id', address)
-      .where('auth_provider', 'oidc-xumm')
-      .firstOrFail()
-    address = externalUser.externalId
-  }
-  const network = request.param('network', 'main')
-  const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
-    method: 'account_nfts',
-    params: [
-      {
-        account: address,
-        ledger_index: 'validated',
-      },
-    ],
-  })
-  response.abortIf(res.result?.error, res.result?.error, 500)
-  const internalNFTs = await SupportedNft.query()
-    .whereIn(
-      'contract_address',
-      res.result.account_nfts.map((nft) => nft.Issuer)
-    )
-    .whereIn(
-      'taxon',
-      res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
-    )
-  return response.json({
-    nfts: internalNFTs.map((nft) => ({
-      contract_address: nft.contract_address,
-      image_link: nft?.image_link,
-      NFTokenID: res.result.account_nfts.find(
-        // eslint-disable-next-line eqeqeq
-        (nft) => nft.Issuer === nft.contract_address && nft.NFTokenTaxon == nft.taxon
-      ),
-      discord: nft.features.includes('discord'),
-      twitter: nft.features.includes('twitter'),
-      twilio: nft.features.includes('twilio'),
-      dark_mode: nft.features.includes('dark_mode'),
-    })),
-  })
-})
-Route.get('/mock-login', async ({ auth }) => {
-  const user = await User.firstOrFail()
-  await auth.use('web').login(user)
-  return { me: user }
+  const verified = await NFTController.verify(
+    request.param('address'),
+    request.param('network', 'main')
+  )
+  return response.json(verified || { error: true })
 })
 
 Route.group(() => {
   Route.get('/', 'Admin/SupportedNftsController.index')
 }).prefix('/supported_nftss')
 
-Route.get('/login', 'AuthController.login')
+Route.get('/login-user', 'AuthController.loginUser')
+// Route.get('/login', 'AuthController.login')
 Route.post('/chat-webhook', 'WebHook/WebhookController.update')
 
 Route.post('/webhook', 'AuthController.webhook')
 Route.get('/check-nft/:address/:network/:service', 'NFTController.check')
 
 Route.get('/me', 'User/UsersController.index').middleware(['auth', 'active'])
-Route.get('/my-address/:address', async ({ request, response }) => {
-  let address = request.param('address')
-  const externalUser = await UserExternalId.query()
-    .where('user_id', address)
-    .where('auth_provider', 'oidc-xumm')
-    .firstOrFail()
-  return response.json({
-    address: externalUser.externalId,
-  })
-})
+Route.post('/my-address', 'User/UsersController.fromAddress')
 
 Route.delete('/logout', async ({ session, auth }) => {
   session.forget('current_uuid')
   await auth.use('web').logout()
   return { success: true }
 }).middleware(['auth', 'active'])
+
+Route.post('payment/credit/:credit', 'User/PaymentController.createPayment')
+Route.post('payment/subscription/:credit', 'User/PaymentController.createSubscription')
 
 Route.group(() => {
   Route.group(() => {
@@ -190,4 +139,5 @@ Route.group(() => {
   Route.get('/credits', 'Admin/CreditsController.index')
   Route.get('/supported_nfts', 'Admin/SupportedNftsController.index')
   Route.get('/subscriptions', 'Admin/SubscriptionsController.index')
-}).middleware(['auth', 'active'])
+})
+// .middleware(['auth', 'active'])

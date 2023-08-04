@@ -9,6 +9,8 @@ import { XummPostPayloadBodyJson } from 'xumm-sdk/dist/src/types/xumm-api'
 import NotFoundException from 'App/Exceptions/NotFoundException'
 import UnProcessableException from 'App/Exceptions/UnProcessableException'
 import AuthorizationException from 'App/Exceptions/AuthorizationException'
+import User from 'App/Models/User'
+import UserExternalId from 'App/Models/UserExternalId'
 
 export enum PaymentTypeEnum {
   CREDIT = 'CREDIT',
@@ -26,7 +28,41 @@ export default class PaymentController {
     }
     const { id, price } = subscription
     const paymentType = PaymentTypeEnum.SUBSCRIPTION
-    return this.processPayment(auth, price, paymentType, id)
+    const authUser = await auth.use('web').user
+    if (!authUser) {
+      throw new AuthorizationException('Auth User does not exists')
+    }
+    return this.processPayment(authUser, price, paymentType, id)
+  }
+
+  public async createSubscription({ request, params }: HttpContextContract) {
+    let address = request.input('address')
+    if (address.length !== 34) {
+      const externalUser = await UserExternalId.query()
+        .where('user_id', address)
+        .where('auth_provider', 'oidc-xumm')
+        .firstOrFail()
+      address = externalUser.externalId
+    }
+    if (!params.subscription) {
+      throw new UnProcessableException('Please provide subscriptionID in params!')
+    }
+    const subscription = await Subscription.find(params.subscription)
+    if (!subscription) {
+      throw new NotFoundException('Subscription not found!')
+    }
+    const { id, price } = subscription
+    const paymentType = PaymentTypeEnum.SUBSCRIPTION
+    const authUser = await User.firstOrCreate(
+      {
+        address: address,
+      },
+      {}
+    )
+    if (!authUser) {
+      throw new AuthorizationException('Auth User does not exists')
+    }
+    return this.processPayment(authUser, price, paymentType, id)
   }
 
   public async creditPayment({ auth, params }: HttpContextContract) {
@@ -39,19 +75,46 @@ export default class PaymentController {
     }
     const { id, price } = credit
     const paymentType = PaymentTypeEnum.CREDIT
-    return this.processPayment(auth, price, paymentType, id)
-  }
-
-  public async processPayment(
-    auth,
-    paymentAmount: number,
-    paymentType: PaymentTypeEnum,
-    entityId: number
-  ) {
     const authUser = await auth.use('web').user
     if (!authUser) {
       throw new AuthorizationException('Auth User does not exists')
     }
+    return this.processPayment(authUser, price, paymentType, id)
+  }
+
+  public async createPayment({ request, params }: HttpContextContract) {
+    let address = request.input('address')
+    if (address.length !== 34) {
+      const externalUser = await UserExternalId.query()
+        .where('user_id', address)
+        .where('auth_provider', 'oidc-xumm')
+        .firstOrFail()
+      address = externalUser.externalId
+    }
+    if (!params.credit) {
+      throw new UnProcessableException('Please provide creditID in params!')
+    }
+    const credit = await Credit.find(params.credit)
+    if (!credit) {
+      throw new NotFoundException('Credit not found!')
+    }
+    const { id, price } = credit
+    const paymentType = PaymentTypeEnum.CREDIT
+    const authUser = await User.firstOrCreate(
+      {
+        address: address,
+      },
+      {}
+    )
+    return this.processPayment(authUser, price, paymentType, id)
+  }
+
+  public async processPayment(
+    authUser: User,
+    paymentAmount: number,
+    paymentType: PaymentTypeEnum,
+    entityId: number
+  ) {
     let destination
     try {
       destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
