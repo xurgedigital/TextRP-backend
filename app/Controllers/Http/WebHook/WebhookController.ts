@@ -10,6 +10,8 @@ import NFTController from 'App/Controllers/Http/NFTController'
 
 export default class WebhookController {
   public async update({ request, response }: HttpContextContract) {
+    console.log('chat webhook initiated')
+
     const webhookPassword = Env.get('WEBHOOK_SECRET')
     const updateUserSchema = schema.create({
       service: schema.enum(['discord', 'twitter', 'twilio'] as const),
