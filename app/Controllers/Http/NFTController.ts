@@ -3,7 +3,6 @@ import axios from 'axios'
 import SupportedNft from 'App/Models/SupportedNft'
 import UserExternalId from 'App/Models/UserExternalId'
 import User from 'App/Models/User'
-import { convertHexToString } from 'xrpl'
 
 export enum NETWORKS {
   MAIN = 'https://xrplcluster.com',
@@ -21,60 +20,6 @@ export default class NFTController {
     return !!verified?.nfts?.find((nft) => nft[service] === true)
   }
 
-  public static async getIPFSMetadata(nft) {
-    const hexToString = convertHexToString(nft.URI)
-
-    const uriString = hexToString.split('://')
-
-    if (uriString[0] === 'ipfs') {
-      const response: any = await axios.get(`https://ipfs.io/ipfs/${uriString[1]}`)
-      if (response.data) {
-        return {
-          contract_address: nft.Issuer,
-          taxon: nft.NFTokenTaxon,
-          nft: response.data,
-        }
-      }
-    } else {
-      return { contract_address: nft.Issuer, taxon: nft.NFTokenTaxon }
-    }
-  }
-
-  // get all nfts
-
-  public static async AllNfts(addressA: string, network: string) {
-    let address = addressA
-    if (address.length !== 34) {
-      const externalUser = await UserExternalId.query()
-        .where('user_id', address)
-        .where('auth_provider', 'oidc-xumm')
-        .firstOrFail()
-      address = externalUser.externalId
-    }
-
-    const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
-      method: 'account_nfts',
-      params: [
-        {
-          account: address,
-          ledger_index: 'validated',
-        },
-      ],
-    })
-
-    const getAllNfts = res.result.account_nfts.map(async (nft: any) =>
-      Promise.resolve(this.getIPFSMetadata(nft))
-    )
-
-    const resolve = await Promise.all(getAllNfts)
-
-    console.log(resolve)
-
-    return resolve
-  }
-
-  // get available nfts
-
   public static async verify(addressA: string, network: string) {
     let address = addressA
     if (address.length !== 34) {
@@ -84,62 +29,7 @@ export default class NFTController {
         .firstOrFail()
       address = externalUser.externalId
     }
-    // console.log('address', address)
-    console.log(NETWORKS[network.toUpperCase()])
-
-    const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
-      method: 'account_nfts',
-      params: [
-        {
-          account: address,
-          ledger_index: 'validated',
-        },
-      ],
-    })
-    if (res.result?.error) return undefined
-    const internalNFTs = await SupportedNft.query()
-    // .whereIn(
-    //   'contract_address',
-    //   res.result.account_nfts.map((nft) => nft.Issuer)
-    // )
-    // .whereIn(
-    //   'taxon',
-    //   res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
-    // )
-    const authUser = await User.firstOrCreate(
-      {
-        address: address,
-      },
-      {}
-    )
-    await authUser.load('subscriptions', (q) => {
-      q.where('expires_at', '>', new Date())
-    })
-
-    return {
-      nfts: internalNFTs.map((nft) => ({
-        address,
-        contract_address: nft.contract_address,
-        image: nft?.image_link,
-        taxon: nft.taxon,
-        feature: nft.feature,
-        rule: nft.rule,
-      })),
-    }
-  }
-
-  public static async enabledNfts(addressA: string, network: string) {
-    let address = addressA
-    if (address.length !== 34) {
-      const externalUser = await UserExternalId.query()
-        .where('user_id', address)
-        .where('auth_provider', 'oidc-xumm')
-        .firstOrFail()
-      address = externalUser.externalId
-    }
-
-    console.log(NETWORKS[network.toUpperCase()])
-
+    console.log('address', address)
     const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
       method: 'account_nfts',
       params: [
@@ -165,21 +55,23 @@ export default class NFTController {
       },
       {}
     )
-
-    console.log(res.result.account_nfts.map((nft) => nft.Issuer))
-
     await authUser.load('subscriptions', (q) => {
       q.where('expires_at', '>', new Date())
     })
-
     return {
+      address,
       nfts: internalNFTs.map((nft) => ({
-        address,
         contract_address: nft.contract_address,
-        image: nft?.image_link,
-        taxon: nft.taxon,
-        feature: nft.feature,
-        rule: nft.rule,
+        image_link: nft?.image_link,
+        NFTokenID: res.result.account_nfts.find(
+          // eslint-disable-next-line eqeqeq
+          (nf) => nf.Issuer === nft.contract_address && nf.NFTokenTaxon == nft.taxon
+        ),
+
+        discord: nft.features.includes('discord'),
+        twitter: nft.features.includes('twitter'),
+        twilio: nft.features.includes('twilio') && authUser.subscriptions.length > 0,
+        dark_mode: nft.features.includes('dark_mode'),
       })),
     }
   }

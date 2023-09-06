@@ -18,16 +18,7 @@ export default class SupportedNft extends BaseModel {
   public features: string[] | string
 
   @column({})
-  public feature: string
-
-  @column({})
-  public rule: string
-
-  @column({})
   public taxon: string
-
-  @column({})
-  public url: string
 
   @column({})
   public image_link: string
