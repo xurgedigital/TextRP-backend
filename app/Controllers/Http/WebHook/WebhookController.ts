@@ -23,6 +23,10 @@ export default class WebhookController {
 
     const payload = await request.validate({ schema: updateUserSchema })
     let address = payload.address
+    console.log('Payload', payload)
+
+    console.log('validating address', address)
+
     if (address.length !== 34) {
       const externalUser = await UserExternalId.query()
         .where('user_id', address)
@@ -31,19 +35,27 @@ export default class WebhookController {
       address = externalUser.externalId
     }
     console.log('new address', address)
-    const enableVerification = Env.get('VERIFY_NFT', false)
-    if (enableVerification) {
-      const verified = await NFTController.verifyHolding(address, payload.service, payload.network)
-      if (!verified) response.status(403)
-    }
+    // const enableVerification = Env.get('VERIFY_NFT', false)
+    // if (enableVerification) {
+    //   const verified = await NFTController.verifyHolding(address, payload.service, payload.network)
+    //   if (!verified) response.status(403)
+    // }
     const user = await UserCredit.query()
       .whereHas('user', (q) => q.where('address', address))
       .firstOrFail()
-    response.abortIf(user.balance < 0, 'Not Enough Balance', 403)
+
+    console.log('User Data', user)
+
+    response.abortIf(user.balance <= 0, 'Not Enough Balance', 403)
+
     const setting = await PlatformSetting.query()
       .where('key', `${payload.service}_${payload.type}`)
       .firstOrFail()
+
+    console.log('setting', setting)
+
     const trx = await Database.transaction()
+
     await UserCredit.query()
       .useTransaction(trx)
       .forUpdate()
