@@ -6,7 +6,6 @@ import UserCredit from 'App/Models/UserCredit'
 import Database from '@ioc:Adonis/Lucid/Database'
 import UserExternalId from 'App/Models/UserExternalId'
 import PlatformSetting from 'App/Models/PlatformSetting'
-import NFTController from 'App/Controllers/Http/NFTController'
 
 export default class WebhookController {
   public async update({ request, response }: HttpContextContract) {
