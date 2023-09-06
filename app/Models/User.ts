@@ -56,6 +56,9 @@ export default class User extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
 
+  @column()
+  public balance: string | null
+
   @hasOne(() => UserCredit, {})
   public credit: HasOne<typeof UserCredit>
 

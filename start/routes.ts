@@ -27,8 +27,32 @@ Route.get('/', async () => {
 Route.get('/available-features', async () => {
   return { features: ['twilio', 'discord', 'twitter', 'dark_mode'] }
 })
+
+// get all nfts
+Route.get('/my-features/:address/:network/all', async ({ response, request }) => {
+  const allNftsData = await NFTController.AllNfts(
+    request.param('address'),
+    request.param('network', 'main')
+  )
+
+  console.log('from route', allNftsData)
+
+  return response.json(allNftsData || { error: true })
+})
+
+// get Available Nfts
+
 Route.get('/my-features/:address/:network', async ({ response, request }) => {
   const verified = await NFTController.verify(
+    request.param('address'),
+    request.param('network', 'main')
+  )
+  return response.json(verified || { error: true })
+})
+
+// get Enabled Nfts
+Route.get('/my-features/:address/:network/enabled', async ({ response, request }) => {
+  const verified = await NFTController.enabledNfts(
     request.param('address'),
     request.param('network', 'main')
   )

@@ -1,6 +1,7 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { schema } from '@ioc:Adonis/Core/Validator'
 import User from 'App/Models/User'
+import UserCredit from 'App/Models/UserCredit'
 import UserExternalId from 'App/Models/UserExternalId'
 
 export const loadUserData = async (user: User): Promise<User> => {
@@ -33,6 +34,12 @@ export default class UsersController {
       },
       {}
     )
+
+    const getCredits: any = await UserCredit.query().where('userId', authUser.id)
+
+    Object.assign(authUser, { credit: getCredits.balance })
+    console.log(authUser)
+
     if (authUser) await loadUserData(authUser)
 
     return response.json({ user: authUser, address })
