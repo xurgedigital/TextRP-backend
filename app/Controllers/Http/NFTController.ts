@@ -61,15 +61,18 @@ export default class NFTController {
       ],
     })
 
-    const getAllNfts = res.result.account_nfts.map(async (nft: any) =>
-      Promise.resolve(this.getIPFSMetadata(nft))
-    )
+    if (res.result.account_nfts) {
+      const getAllNfts = res.result.account_nfts.map(async (nft: any) =>
+        Promise.resolve(this.getIPFSMetadata(nft))
+      )
 
-    const resolve = await Promise.all(getAllNfts)
+      const resolve = await Promise.all(getAllNfts)
 
-    console.log(resolve)
+      console.log(resolve)
 
-    return resolve
+      return resolve
+    }
+    return { msg: 'No NFTS Found' }
   }
 
   // get available nfts
@@ -86,16 +89,18 @@ export default class NFTController {
     // console.log('address', address)
     console.log(NETWORKS[network.toUpperCase()])
 
-    const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
-      method: 'account_nfts',
-      params: [
-        {
-          account: address,
-          ledger_index: 'validated',
-        },
-      ],
-    })
-    if (res.result?.error) return undefined
+    // const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
+    //   method: 'account_nfts',
+    //   params: [
+    //     {
+    //       account: address,
+    //       ledger_index: 'validated',
+    //     },
+    //   ],
+    // })
+    // console.log(res.result)
+
+    // if (res.result?.error) return undefined
     const internalNFTs = await SupportedNft.query()
     // .whereIn(
     //   'contract_address',
@@ -148,7 +153,7 @@ export default class NFTController {
         },
       ],
     })
-    if (res.result?.error) return undefined
+    if (res.result?.error) return { msg: 'Envalid Account' }
     const internalNFTs = await SupportedNft.query()
       .whereIn(
         'contract_address',

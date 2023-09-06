@@ -19,6 +19,7 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
+import FeaturesController from 'App/Controllers/Http/FeaturesController'
 import NFTController from 'App/Controllers/Http/NFTController'
 
 Route.get('/', async () => {
@@ -166,3 +167,8 @@ Route.group(() => {
   Route.get('/subscriptions', 'Admin/SubscriptionsController.index')
 })
 // .middleware(['auth', 'active'])
+
+Route.get('/get_feature_list', async ({ response }) => {
+  const featureList = await FeaturesController.getAllFeatures()
+  return response.json(featureList)
+})
