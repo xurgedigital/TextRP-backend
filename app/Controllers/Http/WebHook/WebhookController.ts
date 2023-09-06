@@ -9,7 +9,7 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 // import User from 'App/Models/User'
 
 export default class WebhookController {
-  public async update({ request, response }: HttpContextContract) {
+  public async update({ response }: HttpContextContract) {
     console.log('chat webhook initiated')
 
     // const webhookPassword = Env.get('WEBHOOK_SECRET')
