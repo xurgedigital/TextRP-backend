@@ -11,7 +11,7 @@ import User from 'App/Models/User'
 export default class WebhookController {
   public async update({ request, response }: HttpContextContract) {
     console.log('webhook initiated')
-    console.log('req', request.body)
+    console.log('req', request.body())
 
     const webhookPassword = Env.get('WEBHOOK_SECRET')
     const updateUserSchema = schema.create({
@@ -23,7 +23,6 @@ export default class WebhookController {
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
-
     console.log('payload', payload)
 
     let address = payload.address
