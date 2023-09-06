@@ -16,7 +16,7 @@ export default class WebhookController {
     const webhookPassword = Env.get('WEBHOOK_SECRET')
     const updateUserSchema = schema.create({
       service: schema.enum(['discord', 'twitter', 'twilio'] as const),
-      network: schema.string.nullable(),
+      // network: schema.string.nullable(),
       type: schema.enum(['receive', 'send'] as const),
       address: schema.string(),
       password: schema.string([rules.equalTo(webhookPassword)]),
