@@ -81,15 +81,16 @@ export default class NFTController {
       request.param('address'),
       request.param('network', 'main')
     )
-    const service = request.param('service')
-    response.abortIf(verified === undefined, 'Something went wrong', 500)
-    if (service) {
-      response.abortUnless(
-        verified?.nfts?.find((nft) => nft[service] === true),
-        'Unauthorised',
-        403
-      )
-    }
+    // const service = request.param('service')
+
+    // response.abortIf(verified === undefined, 'Something went wrong', 500)
+    // if (service) {
+    //   response.abortUnless(
+    //     verified?.nfts?.find((nft) => nft[service] === true),
+    //     'Unauthorised',
+    //     403
+    //   )
+    // }
     return response.json(verified)
   }
 }
