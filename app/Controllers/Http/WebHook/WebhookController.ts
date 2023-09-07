@@ -11,7 +11,6 @@ import User from 'App/Models/User'
 export default class WebhookController {
   public async update({ request, response }: HttpContextContract) {
     console.log('webhook initiated')
-    console.log('req', request.body())
 
     const webhookPassword = Env.get('WEBHOOK_SECRET')
     const updateUserSchema = schema.create({
@@ -23,7 +22,6 @@ export default class WebhookController {
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
-    console.log('payload', payload)
 
     let address = payload.address
     if (address.length !== 34) {
@@ -33,33 +31,21 @@ export default class WebhookController {
         .firstOrFail()
       address = externalUser.externalId
     }
-    console.log('new address', address)
-    // const enableVerification = Env.get('VERIFY_NFT', false)
-    // if (enableVerification) {
-    //   const verified = await NFTController.verifyHolding(address, payload.service, payload.network)
-    //   if (!verified) response.status(403)
-    // }
 
-    const credit = await UserCredit.query().where('address', address).firstOrFail()
+    const user: any = await User.query().where('address', address).firstOrFail()
+    response.abortIf(!user, 'User Not Found', 403)
 
-    console.log('credit', credit)
+    const credit = await UserCredit.query().where('userId', user.id).firstOrFail()
 
-    const user: any = await User.query().where('id', credit.userId).firstOrFail()
-
-    console.log('user', user)
-
-    response.abortIf(user.balance < 0, 'Not Enough Balance', 403)
+    response.abortIf(credit.balance < 0, 'Not Enough Balance', 403)
     const setting = await PlatformSetting.query()
       .where('key', `${payload.service}_${payload.type}`)
       .firstOrFail()
-    const trx = await Database.transaction()
-    await UserCredit.query()
-      .useTransaction(trx)
-      .forUpdate()
-      .whereHas('user', (q) => q.where('address', address))
-      .update('balance', parseFloat(String(user.balance)) - parseFloat(setting.value))
 
-    await trx.commit()
+    await UserCredit.updateOrCreate(
+      { userId: credit.userId },
+      { balance: parseFloat(String(credit.balance)) - parseFloat(setting.value) }
+    )
     return response.status(200)
   }
 }
