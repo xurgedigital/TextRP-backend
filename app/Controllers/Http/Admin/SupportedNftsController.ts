@@ -30,62 +30,31 @@ export default class SupportedNftsController {
 
   public async create({ request, response }: HttpContextContract) {
     const updateUserSchema = schema.create({
-      title: schema.string.optional(),
-      description: schema.string.optional(),
-      contract_address: schema.string.optional(),
+      title: schema.string(),
+      description: schema.string(),
+      contract_address: schema.string(),
       // features: schema.array().members(schema.string()),
       feature: schema.string(),
       url: schema.string.optional(),
       rule: schema.string(),
-      taxon: schema.string.optional(),
+      taxon: schema.string(),
       image_link: schema.string.optional(),
     })
 
     const payload = await request.validate({ schema: updateUserSchema })
 
-    if (payload.url) {
-      // eslint-disable-next-line no-debugger
-
-      const nftId = payload.url.split('/nft/')[1]
-
-      const getNftFromURL: any = await axios.post('https://s1.ripple.com:51234/', {
-        method: 'nft_info',
-        params: [
-          {
-            nft_id: nftId,
-          },
-        ],
-      })
-
-      console.log(getNftFromURL.data.result)
-      if (getNftFromURL.data.result.uri) {
-        const hexToString = convertHexToString(getNftFromURL.data.result.uri)
-        const uriString = hexToString.includes('ipfs://') && hexToString.split('ipfs://')[1]
-
-        const nftData: any = await axios.get(
-          hexToString.includes('ipfs://') ? `https://ipfs.io/ipfs/${uriString}` : hexToString
-        )
-        console.log(uriString, hexToString)
-        console.log('iamge', nftData.data)
-
-        const imageURI = `https://ipfs.io/ipfs/${nftData.data.image.split('ipfs://')[1]}`
-
-        const user = await SupportedNft.create({
-          title: nftData.data.name,
-          description: nftData.data.description,
-          contract_address: getNftFromURL.data.result.issuer,
-          // features: schema.array().members(schema.string()),
-          feature: payload.feature,
-          url: payload.url,
-          rule: payload.rule,
-          taxon: getNftFromURL.data.nft_taxon,
-          image_link: imageURI,
-        })
-        return response.json(user)
-      } else {
-        return response.status(400).json(getNftFromURL.data.result.error_message)
-      }
-    }
+    const addedNFT = await SupportedNft.create({
+      title: payload.title,
+      description: payload.description,
+      contract_address: payload.contract_address,
+      // features: schema.array().members(schema.string()),
+      feature: payload.feature,
+      url: payload.url,
+      rule: payload.rule,
+      taxon: payload.taxon,
+      image_link: payload.image_link,
+    })
+    return response.json(addedNFT)
 
     // const user = await SupportedNft.create({
     //   ...payload,
@@ -99,14 +68,16 @@ export default class SupportedNftsController {
       title: schema.string(),
       description: schema.string(),
       contract_address: schema.string(),
-      features: schema.array().members(schema.string()),
+      // features: schema.array().members(schema.string()),
+      feature: schema.string(),
+      url: schema.string.optional(),
+      rule: schema.string(),
       taxon: schema.string(),
       image_link: schema.string.optional(),
     })
     const payload = await request.validate({ schema: updateUserSchema })
     user.merge({
       ...payload,
-      features: JSON.stringify(payload.features),
     })
     await user.save()
     return response.json(user)
@@ -115,5 +86,50 @@ export default class SupportedNftsController {
   public async delete({ response }: HttpContextContract, user: SupportedNft) {
     await user.delete()
     return response.status(200)
+  }
+
+  public async getDataFromURL({ request, response }: HttpContextContract) {
+    const url = request.body().url
+    const nftId = url.split('/nft/')[1]
+
+    try {
+      const getNftFromURL: any = await axios.post('https://s1.ripple.com:51234/', {
+        method: 'nft_info',
+        params: [
+          {
+            nft_id: nftId,
+          },
+        ],
+      })
+
+      console.log(getNftFromURL.data.result)
+      if (getNftFromURL.data.result.status === 'error') {
+        return response.status(400).json({
+          error: 'Error while getting data from URL, Make sure the URL is valid',
+        })
+      }
+      if (getNftFromURL.data.result.uri) {
+        const hexToString = convertHexToString(getNftFromURL.data.result.uri)
+        const uriString = hexToString.includes('ipfs://') && hexToString.split('ipfs://')[1]
+
+        const nftData: any = await axios.get(
+          hexToString.includes('ipfs://') ? `https://ipfs.io/ipfs/${uriString}` : hexToString
+        )
+
+        const imageURI = `https://ipfs.io/ipfs/${nftData.data.image.split('ipfs://')[1]}`
+
+        return response.json({
+          title: nftData.data.name,
+          description: nftData.data.description,
+          contract_address: getNftFromURL.data.result.issuer,
+          taxon: getNftFromURL.data.nft_taxon,
+          image_link: imageURI,
+        })
+      }
+    } catch (error) {
+      return response.json({
+        error: 'Error while getting data from URL, Make sure the URL is valid',
+      })
+    }
   }
 }

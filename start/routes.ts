@@ -138,6 +138,7 @@ Route.group(() => {
 })
   .middleware(['auth', 'active'])
   .prefix('/admin')
+Route.post('/URLtoNFTData', 'Admin/SupportedNftsController.getDataFromURL')
 
 Route.group(() => {
   Route.get('/me', 'User/UsersController.index')
