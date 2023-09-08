@@ -1,5 +1,6 @@
 import Subscription from 'App/Models/Subscription'
 import Credit from 'App/Models/Credit'
+// import { XummSdk } from 'xumm-sdk'
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Payment from 'App/Models/Payment'
 import XummService from 'App/Services/XummService'
@@ -11,7 +12,11 @@ import UnProcessableException from 'App/Exceptions/UnProcessableException'
 import AuthorizationException from 'App/Exceptions/AuthorizationException'
 import User from 'App/Models/User'
 import UserExternalId from 'App/Models/UserExternalId'
-
+// import { Duration } from 'luxon'
+// const XUMM = new XummSdk(
+//   'b19848bd-6133-4267-aa72-2bb4a5183893',
+//   '0ec479fd-5241-4002-b599-99cfc453b6ad'
+// )
 export enum PaymentTypeEnum {
   CREDIT = 'CREDIT',
   SUBSCRIPTION = 'SUBSCRIPTION',
@@ -80,6 +85,39 @@ export default class PaymentController {
       throw new AuthorizationException('Auth User does not exists')
     }
     return this.processPayment(authUser, price, paymentType, id)
+  }
+  public async transferPayment({ request, params }: HttpContextContract) {
+    const address = params.address
+    const { message, amount } = request.only(['message', 'amount'])
+    const buffer = Buffer.from(message, 'utf-8')
+
+    // Convert the Buffer to a hexadecimal string
+    const hexString = buffer.toString('hex')
+
+    const payload: any = {
+      txjson: {
+        TransactionType: 'Payment',
+        Destination: address, // Replace with the actual destination account address
+        Amount: amount, // Replace with the amount in drops (XRP) you want to send
+        Fee: '12', // Replace with the transaction fee in drops
+        Memos: [
+          {
+            Memo: {
+              //"MemoType": 'hex', // Can be 'text', 'hex', or 'json'
+              // "MemoData": "F09F94A520546563686E6F7469702E636F6D"
+              MemoData: hexString,
+            },
+          },
+        ],
+        //  Sequence: '12345', // Replace with the next sequence number of the source account
+      },
+    }
+    try {
+      const ping = await XummService.sdk.payload.create(payload)
+      return { data: ping }
+    } catch (e) {
+      throw new UnProcessableException('UUID not returned by xumm')
+    }
   }
 
   public async createPayment({ request, params }: HttpContextContract) {

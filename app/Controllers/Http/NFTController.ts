@@ -1,5 +1,6 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import axios from 'axios'
+import { RippleAPI } from 'ripple-lib'
 import SupportedNft from 'App/Models/SupportedNft'
 import UserExternalId from 'App/Models/UserExternalId'
 import User from 'App/Models/User'
@@ -74,7 +75,69 @@ export default class NFTController {
     }
     return { msg: 'No NFTS Found' }
   }
+  public static async verifyAddress(address: string) {
+    // const { RippleAPI } = require('ripple-lib');
 
+    // // Create a RippleAPI instance and connect to the XRP Ledger Testnet server
+    const api = new RippleAPI({
+      //   server: 'wss://s1.ripple.com', // Use the mainnet server or a testnet server
+      server: 'wss://s.altnet.rippletest.net:51233', // Ripple Testnet server
+    })
+    // // Replace with the wallet address you want to check
+    // const accountAddress = 'r4A7yTguEqq1XUZ8eaq4DyKeyZGGmngY74';
+    let result = {}
+    //     const rippleCodec = require('ripple-address-codec');
+
+    // function isValidXrpAddress(address) {
+    //   try {
+    //     return rippleCodec.isValidClassicAddress(address);
+    //   } catch (error) {
+    //     return false;
+    //   }
+    // }
+
+    // // Example usage:
+    // const walletAddress = 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh';
+
+    // if (isValidXrpAddress(walletAddress)) {
+    //   console.log('The XRP wallet address is valid.');
+    // } else {
+    //   console.log('The XRP wallet address is invalid.');
+    // }
+
+    // // Connect to the XRP Ledger Testnet server
+    await api.connect().then(async () => {
+      try {
+        // Fetch the transaction history for the account
+        const transactions = await api.getTransactions(address, {
+          limit: 1, // You can adjust the limit as needed
+        })
+        // console.log("LLLLLLLLL", transactions);
+        // Check if the account has any transaction history
+        if (transactions.length > 0) {
+          result['active'] = true
+        } else {
+          result['active'] = false
+        }
+      } catch (error) {
+        result['active'] = false
+      }
+      try {
+        // Fetch account info
+        const accountInfo = await api.getAccountInfo(address)
+
+        if (accountInfo) {
+          result['isValid'] = true
+        } else result['isValid'] = false
+      } catch (error) {
+        result['isValid'] = false
+      } finally {
+        // Disconnect from the XRP Ledger Testnet server
+        api.disconnect()
+      }
+    })
+    return result
+  }
   // get available nfts
 
   public static async verify(addressA: string, network: string) {

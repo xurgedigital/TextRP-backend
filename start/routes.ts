@@ -23,7 +23,7 @@ import FeaturesController from 'App/Controllers/Http/FeaturesController'
 import NFTController from 'App/Controllers/Http/NFTController'
 
 Route.get('/', async () => {
-  return { hello: 'You have found me now do you know what to do?' }
+  return { hello: 'You me now do you know what to do?' }
 })
 Route.get('/available-features', async () => {
   return { features: ['twilio', 'discord', 'twitter', 'dark_mode'] }
@@ -44,13 +44,20 @@ Route.get('/my-features/:address/:network/all', async ({ response, request }) =>
 // get Available Nfts
 
 Route.get('/my-features/:address/:network', async ({ response, request }) => {
+  console.log('KKKKKKKKKKKKKKKK')
+
   const verified = await NFTController.verify(
     request.param('address'),
     request.param('network', 'main')
   )
   return response.json(verified || { error: true })
 })
+Route.get('/verify-address/:address', async ({ response, request }) => {
+  console.log('KKKKKKKKKRRRRRRRRRR')
 
+  const result = await NFTController.verifyAddress(request.param('address'))
+  return response.json(result || { error: true })
+})
 // get Enabled Nfts
 Route.get('/my-features/:address/:network/enabled', async ({ response, request }) => {
   const verified = await NFTController.enabledNfts(
@@ -82,6 +89,7 @@ Route.delete('/logout', async ({ session, auth }) => {
 }).middleware(['auth', 'active'])
 
 Route.post('payment/credit/:credit', 'User/PaymentController.createPayment')
+Route.post('accounts/:address/payments', 'User/PaymentController.transferPayment')
 Route.post('payment/subscription/:credit', 'User/PaymentController.createSubscription')
 
 Route.group(() => {
