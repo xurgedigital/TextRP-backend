@@ -26,6 +26,7 @@ Route.get('/', async () => {
   return { hello: 'You me now do you know what to do?' }
 })
 Route.get('/available-features', async () => {
+  // added login
   return { features: ['twilio', 'discord', 'twitter', 'dark_mode', 'login'] }
 })
 
