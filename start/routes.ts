@@ -26,7 +26,7 @@ Route.get('/', async () => {
   return { hello: 'You me now do you know what to do?' }
 })
 Route.get('/available-features', async () => {
-  return { features: ['twilio', 'discord', 'twitter', 'dark_mode'] }
+  return { features: ['twilio', 'discord', 'twitter', 'dark_mode', 'login'] }
 })
 
 // get all nfts
