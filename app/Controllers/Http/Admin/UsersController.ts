@@ -135,7 +135,7 @@ export default class UsersController {
       expires_at: schema.date(),
     })
 
-    const payload = await request.validate({ schema: updateUserSchema })
+    const payload: any = await request.validate({ schema: updateUserSchema })
     userSubscription.merge(payload)
     await userSubscription.save()
     await loadUserData(user)
@@ -149,7 +149,7 @@ export default class UsersController {
       expires_at: schema.date(),
     })
 
-    const payload = await request.validate({ schema: updateUserSchema })
+    const payload: any = await request.validate({ schema: updateUserSchema })
     await UserSubscription.firstOrCreate(
       {
         userId: user.id,
