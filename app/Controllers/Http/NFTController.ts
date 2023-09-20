@@ -69,8 +69,6 @@ export default class NFTController {
 
       const resolve = await Promise.all(getAllNfts)
 
-      console.log(resolve)
-
       return resolve
     }
     return { msg: 'No NFTS Found' }
@@ -216,16 +214,19 @@ export default class NFTController {
         },
       ],
     })
-    if (res.result?.error) return { msg: 'Envalid Account' }
-    const internalNFTs = await SupportedNft.query()
-      .whereIn(
-        'contract_address',
-        res.result.account_nfts.map((nft) => nft.Issuer)
-      )
-      .whereIn(
-        'taxon',
-        res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
-      )
+    // if (res.result?.error) return { msg: 'Invalid Account' }
+    let internalNFTs: any = []
+    if (res.result.account_nfts) {
+      internalNFTs = await SupportedNft.query()
+        .whereIn(
+          'contract_address',
+          res.result.account_nfts.map((nft) => nft.Issuer)
+        )
+        .whereIn(
+          'taxon',
+          res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
+        )
+    }
     const authUser = await User.firstOrCreate(
       {
         address: address,
@@ -233,8 +234,12 @@ export default class NFTController {
       {}
     )
 
-    console.log(res.result.account_nfts.map((nft) => nft.Issuer))
+    // console.log(res.result.account_nfts.map((nft) => nft.Issuer))
+    const alwayEnabledNfts = await SupportedNft.query().whereIn('rule', ['always_enabled'])
 
+    if (alwayEnabledNfts.length > 0) {
+      internalNFTs = [...internalNFTs, ...alwayEnabledNfts]
+    }
     await authUser.load('subscriptions', (q) => {
       q.where('expires_at', '>', new Date())
     })
