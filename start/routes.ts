@@ -90,7 +90,7 @@ Route.delete('/logout', async ({ session, auth }) => {
 }).middleware(['auth', 'active'])
 
 Route.post('payment/credit/:credit', 'User/PaymentController.createPayment')
-Route.post('accounts/:address/payments', 'User/PaymentController.transferPayment')
+Route.post('accounts/:address/payments', 'User/PaymentController.transferWithSecretKey')
 Route.post('payment/subscription/:credit', 'User/PaymentController.createSubscription')
 
 Route.group(() => {
