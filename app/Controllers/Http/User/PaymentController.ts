@@ -12,6 +12,12 @@ import UnProcessableException from 'App/Exceptions/UnProcessableException'
 import AuthorizationException from 'App/Exceptions/AuthorizationException'
 import User from 'App/Models/User'
 import UserExternalId from 'App/Models/UserExternalId'
+import { RippleAPI } from 'ripple-lib'
+
+const senderAddress = 'rUZf4vHhLJYGaY3MjtqGcd8cwiimH3aQzw' // Replace with your sender address
+const senderSecretKey = 'sEd7ZjVAeAY58rwYVokvzsRALmgV8x4' // Replace with your sender secret key
+const api = new RippleAPI({ server: 'wss://s.altnet.rippletest.net:51233/' })
+
 // import { Duration } from 'luxon'
 // const XUMM = new XummSdk(
 //   'b19848bd-6133-4267-aa72-2bb4a5183893',
@@ -85,6 +91,62 @@ export default class PaymentController {
       throw new AuthorizationException('Auth User does not exists')
     }
     return this.processPayment(authUser, price, paymentType, id)
+  }
+  public async transferWithSecretKey({ request, params }: HttpContextContract) {
+    const address = params.address
+    const { message, amount } = request.only(['message', 'amount'])
+    try {
+      // Connect to the Ripple network
+      // Replace with your preferred Ripple server URL
+      await api.connect()
+      console.log('Connected to the Ripple network')
+
+      // Retrieve the sender's account information (to check the XRP balance)
+      const senderAccountInfo = await api.getAccountInfo(senderAddress)
+      console.log('Sender XRP balance:', senderAccountInfo.xrpBalance)
+
+      console.log('!!!!!!!!', Buffer.from(message, 'utf-8').toString('hex'))
+
+      // Prepare the transaction
+      const preparedTx = await api.preparePayment(senderAddress, {
+        source: {
+          address: senderAddress,
+          maxAmount: {
+            value: amount,
+            currency: 'XRP',
+          },
+        },
+        destination: {
+          address: address,
+          amount: {
+            value: amount,
+            currency: 'XRP',
+          },
+        },
+        memos: [
+          {
+            data: Buffer.from(message, 'utf-8').toString('hex'),
+          },
+        ],
+      })
+
+      // Sign the transaction with the sender's secret key
+      const signedTx = api.sign(preparedTx.txJSON, senderSecretKey)
+
+      // Submit the signed transaction to the Ripple network
+      const txResponse = await api.submit(signedTx.signedTransaction)
+      console.log('Transaction Response:', txResponse)
+
+      // Disconnect from the Ripple network
+      await api.disconnect()
+      console.log('Disconnected from the Ripple network')
+      return { success: 'amount transfered' }
+    } catch (error) {
+      console.error('Error:', error)
+      throw new UnProcessableException(
+        error ? error.toString() : 'issue while processing the transaction'
+      )
+    }
   }
   public async transferPayment({ request, params }: HttpContextContract) {
     const address = params.address
