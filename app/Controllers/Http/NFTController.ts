@@ -192,19 +192,30 @@ export default class NFTController {
       })),
     }
   }
+  public static extractWalletAddress = (inputString: string) => {
+    // Define a regular expression pattern to match XRPL addresses
+    const addressRegex = /@([a-zA-Z0-9]{25,34})/;
 
-  public static async enabledNfts(addressA: string, network: string) {
-    let address = addressA
-    if (address.length !== 34) {
-      const externalUser = await UserExternalId.query()
-        .where('user_id', address)
-        .where('auth_provider', 'oidc-xumm')
-        .firstOrFail()
-      address = externalUser.externalId
+    // Use the RegExp.exec method to find the address in the input string
+    const match = addressRegex.exec(inputString);
+
+    // Check if a match was found and extract the address
+    if (match && match[1]) {
+      return match[1];
     }
-
-    console.log(NETWORKS[network.toUpperCase()])
-
+    // Return null if no address was found
+    return null;
+  };
+  public static async enabledNfts(addressA: string, network: string) {
+    let address = this.extractWalletAddress(addressA)    
+    // if (address.length !== 34) {
+    //   const externalUser = await UserExternalId.query()
+    //     .where('user_id', address)
+    //     .where('auth_provider', 'oidc-xumm')
+    //     .firstOrFail()
+    //   address = externalUser.externalId
+    // }
+    // console.log("UUUUUUUUUU");    
     const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
       method: 'account_nfts',
       params: [
@@ -213,7 +224,7 @@ export default class NFTController {
           ledger_index: 'validated',
         },
       ],
-    })
+    })    
     // if (res.result?.error) return { msg: 'Invalid Account' }
     let internalNFTs: any = []
     if (res.result.account_nfts) {
@@ -229,7 +240,7 @@ export default class NFTController {
     }
     const authUser = await User.firstOrCreate(
       {
-        address: address,
+        address: address ? address : '',
       },
       {}
     )
@@ -243,6 +254,7 @@ export default class NFTController {
     await authUser.load('subscriptions', (q) => {
       q.where('expires_at', '>', new Date())
     })
+    console.log("GGGGGGGGGGGGGGGG", internalNFTs);
 
     return {
       nfts: internalNFTs.map((nft) => ({
