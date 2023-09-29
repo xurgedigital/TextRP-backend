@@ -8,8 +8,8 @@ export default class Features extends BaseModel {
   public feature: string
 
   @column({})
-  public rule: string
+  public rules: string
 
   @column({})
-  public command: string
+  public description: string
 }

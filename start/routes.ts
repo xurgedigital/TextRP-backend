@@ -36,12 +36,72 @@ Route.get('/my-features/:address/:network/all', async ({ response, request }) =>
     request.param('address'),
     request.param('network', 'main')
   )
-
   console.log('from route', allNftsData)
 
   return response.json(allNftsData || { error: true })
 })
 
+Route.post('/create-new-feature', async({response, request})=>{
+  const {feature,rule,description}=request.body();
+  const res = await NFTController.addFeature(feature,rule,description);
+  console.log("TTTTTTTTTTT", res);
+  
+  return response.json(res|| {error: true});
+})
+
+Route.put('/update-feature/:id', async({response, request})=>{
+  const {feature,rule,description}=request.body();
+  const {id} = request.params()
+
+  // return response.json({id})
+  const res = await NFTController.updateFeature(id,feature,rule,description);
+  // console.log("TTTTTTTTTTT", res);
+  
+  return response.json(res|| {error: true});
+})
+
+Route.delete('/delete-nfts/:id', async({response, request})=>{
+  const {id} = request.params()
+  // return response.json({id})
+  const res = await NFTController.deleteNFT(id);
+  // console.log("TTTTTTTTTTT", res);
+  
+  return response.json(res|| {error: true});
+})
+
+Route.get("/get-all-nfts",async()=>{
+  const res = await NFTController.getAllNFTS();
+  return res
+})
+Route.post('/create-new-nft', async({response, request})=>{
+  const {title,url,description,contract_address,taxon,image_link}=request.body();
+  const res = await NFTController.addNFT(contract_address,title,description,taxon,url,image_link);
+  console.log("TTTTTTTTTTT", res);
+  
+  return response.json(res|| {error: true});
+})
+
+Route.put('/update-nft/:id', async({response, request})=>{
+  const {title,url,description,contract_address,taxon,image_link}=request.body();
+  const {id}=request.params();
+  const res = await NFTController.updateNFT(id,contract_address,title,description,taxon,url,image_link);
+  // console.log("TTTTTTTTTTT", res);
+  
+  return response.json(res|| {error: true});
+})
+
+Route.delete('/delete-nft/:id', async({response, request})=>{
+  const {id}=request.params();
+  const res = await NFTController.deleteNFT(id);
+  // console.log("TTTTTTTTTTT", res);
+  return response.json(res|| {error: true});
+})
+
+Route.delete('/get-all-nfts', async({response, request})=>{
+  const res = await NFTController.deleteNFT(id);
+  // console.log("TTTTTTTTTTT", res);
+  return response.json(res|| {error: true});
+})
 // get Available Nfts
 
 Route.get('/my-features/:address/:network', async ({ response, request }) => {

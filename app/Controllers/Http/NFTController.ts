@@ -3,6 +3,10 @@ import axios from 'axios'
 import { RippleAPI } from 'ripple-lib'
 import SupportedNft from 'App/Models/SupportedNft'
 import UserExternalId from 'App/Models/UserExternalId'
+import Nfts from 'App/Models/Nfts'
+// import Nfts from 'App/Models/nfts'
+import Nft_feature_map from 'App/Models/nft_feature_map'
+import Features from 'App/Models/Features'
 import User from 'App/Models/User'
 import { convertHexToString } from 'xrpl'
 
@@ -20,7 +24,6 @@ export default class NFTController {
     const verified = await NFTController.verify(address, network || 'main')
     return !!verified?.nfts?.find((nft) => nft[service] === true)
   }
-
   public static async getIPFSMetadata(nft) {
     const hexToString = convertHexToString(nft.URI)
 
@@ -41,6 +44,98 @@ export default class NFTController {
   }
 
   // get all nfts
+  public static async addFeature(feature:string, rule:string, description:string){
+    try {
+      const res = await Features.create({feature,rules:rule,description})
+      console.log("RRRRRRRRRR", res);
+      return res
+    }catch(e){
+      return false
+    }
+  }
+
+  public static async updateFeature(id: number,feature:string, rule:string, description:string){
+    try{
+      const res = await Features.updateOrCreate({id},{feature,rules:rule,description});
+      console.log("RRRRRRRRRR", res);
+      return res
+    }catch(e){
+      console.log("HHHHHHHH", e);
+      
+      return false
+    }
+  }
+
+  public static async deleteFeature(id: number){
+    try{
+      const res = await Features.findOrFail(id);
+      res.delete();
+      return {delete:true}
+    }catch(e){
+      console.log("HHHHHHHH", e);
+      return false
+    }
+  }
+
+  public static async getAllFeature(){
+    try{
+      const res = await Features.query()
+      // res.delete();
+      return res
+    }catch(e){
+      console.log("HHHHHHHH", e);
+      return false
+    }
+  }
+
+
+
+
+
+
+  public static async addNFT(contract_address:string,title:string,description:string,taxon:string,url:string,image_link:string){
+    try{
+      const res = await Nfts.create({contract_address,title,description,taxon,url,image_link});
+      return res;
+    }catch(e){
+      // console.log
+      return false
+    }
+  }
+
+  public static async updateNFT(id:number,contract_address:string,title:string,description:string,taxon:string,url:string,image_link:string){
+    try{
+      const res = await Nfts.updateOrCreate({id},{contract_address,title,description,taxon,url,image_link});
+      return res;
+    }catch(e){
+      // console.log
+      return false
+    }
+  }
+
+  public static async deleteNFT(id:number){
+    try{
+      const res = await Nfts.findOrFail(id);
+      res.delete();
+      return {delete:true}
+    }catch(e){
+      // console.log
+      return false
+    }
+  }
+
+  public static async getAllNFTS(){
+    try{
+      const res = await Nfts.query()
+      // res.delete();
+      return res
+    }catch(e){
+      console.log("HHHHHHHH", e);
+      return false
+    }
+  }
+
+
 
   public static async AllNfts(addressA: string, network: string) {
     let address = addressA
@@ -194,20 +289,20 @@ export default class NFTController {
   }
   public static extractWalletAddress = (inputString: string) => {
     // Define a regular expression pattern to match XRPL addresses
-    const addressRegex = /@([a-zA-Z0-9]{25,34})/;
+    const addressRegex = /@([a-zA-Z0-9]{25,34})/
 
     // Use the RegExp.exec method to find the address in the input string
-    const match = addressRegex.exec(inputString);
+    const match = addressRegex.exec(inputString)
 
     // Check if a match was found and extract the address
     if (match && match[1]) {
-      return match[1];
+      return match[1]
     }
     // Return null if no address was found
-    return null;
-  };
+    return null
+  }
   public static async enabledNfts(addressA: string, network: string) {
-    let address = this.extractWalletAddress(addressA)    
+    let address = this.extractWalletAddress(addressA)
     // if (address.length !== 34) {
     //   const externalUser = await UserExternalId.query()
     //     .where('user_id', address)
@@ -215,7 +310,7 @@ export default class NFTController {
     //     .firstOrFail()
     //   address = externalUser.externalId
     // }
-    // console.log("UUUUUUUUUU");    
+    // console.log("UUUUUUUUUU");
     const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
       method: 'account_nfts',
       params: [
@@ -224,7 +319,7 @@ export default class NFTController {
           ledger_index: 'validated',
         },
       ],
-    })    
+    })
     // if (res.result?.error) return { msg: 'Invalid Account' }
     let internalNFTs: any = []
     if (res.result.account_nfts) {
@@ -247,14 +342,13 @@ export default class NFTController {
 
     // console.log(res.result.account_nfts.map((nft) => nft.Issuer))
     const alwayEnabledNfts = await SupportedNft.query().whereIn('rule', ['always_enabled'])
-
     if (alwayEnabledNfts.length > 0) {
       internalNFTs = [...internalNFTs, ...alwayEnabledNfts]
     }
     await authUser.load('subscriptions', (q) => {
       q.where('expires_at', '>', new Date())
     })
-    console.log("GGGGGGGGGGGGGGGG", internalNFTs);
+    console.log('GGGGGGGGGGGGGGGG', internalNFTs)
 
     return {
       nfts: internalNFTs.map((nft) => ({
