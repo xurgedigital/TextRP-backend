@@ -5,7 +5,7 @@ import SupportedNft from 'App/Models/SupportedNft'
 import UserExternalId from 'App/Models/UserExternalId'
 import Nfts from 'App/Models/Nfts'
 // import Nfts from 'App/Models/nfts'
-import Nft_feature_map from 'App/Models/nft_feature_map'
+import NftFeatureMap from 'App/Models/NftFeatureMap'
 import Features from 'App/Models/Features'
 import User from 'App/Models/User'
 import { convertHexToString } from 'xrpl'
@@ -44,98 +44,148 @@ export default class NFTController {
   }
 
   // get all nfts
-  public static async addFeature(feature:string, rule:string, description:string){
+  public static async addFeature(feature: string, rule: string, description: string) {
     try {
-      const res = await Features.create({feature,rules:rule,description})
-      console.log("RRRRRRRRRR", res);
+      const res = await Features.create({ feature, rules: rule, description })
+      console.log('RRRRRRRRRR', res)
       return res
-    }catch(e){
+    } catch (e) {
       return false
     }
   }
 
-  public static async updateFeature(id: number,feature:string, rule:string, description:string){
-    try{
-      const res = await Features.updateOrCreate({id},{feature,rules:rule,description});
-      console.log("RRRRRRRRRR", res);
+  public static async updateFeature(
+    id: number,
+    feature: string,
+    rule: string,
+    description: string
+  ) {
+    try {
+      const res = await Features.updateOrCreate({ id }, { feature, rules: rule, description })
+      console.log('RRRRRRRRRR', res)
       return res
-    }catch(e){
-      console.log("HHHHHHHH", e);
-      
+    } catch (e) {
+      console.log('HHHHHHHH', e)
+
       return false
     }
   }
 
-  public static async deleteFeature(id: number){
-    try{
-      const res = await Features.findOrFail(id);
-      res.delete();
-      return {delete:true}
-    }catch(e){
-      console.log("HHHHHHHH", e);
+  public static async deleteFeature(id: number) {
+    try {
+      const res = await Features.findOrFail(id)
+      res.delete()
+      return { delete: true }
+    } catch (e) {
+      console.log('HHHHHHHH', e)
       return false
     }
   }
-
-  public static async getAllFeature(){
-    try{
+  public static async getAllNftOfFeature(id: number) {
+    try {
+      const res = await NftFeatureMap.query().select().where('feature_id', id)
+      return res
+    } catch (e) {
+      return false
+    }
+  }
+  public static async setAllNftOfFeature(id: number, nfts: number[]) {
+    try {
+      await NftFeatureMap.query().delete().where('feature_id', id)
+      let toAdd = nfts.map((nft) => {
+        return { nft_id: nft, feature_id: id }
+      })
+      const res = await NftFeatureMap.createMany(toAdd)
+      return res
+    } catch (e) {
+      return false
+    }
+  }
+  public static async getAllFeature() {
+    try {
       const res = await Features.query()
       // res.delete();
       return res
-    }catch(e){
-      console.log("HHHHHHHH", e);
+    } catch (e) {
       return false
     }
   }
 
-
-
-
-
-
-  public static async addNFT(contract_address:string,title:string,description:string,taxon:string,url:string,image_link:string){
-    try{
-      const res = await Nfts.create({contract_address,title,description,taxon,url,image_link});
-      return res;
-    }catch(e){
+  public static async addNFT(
+    contractAddress: string,
+    title: string,
+    description: string,
+    taxon: string,
+    url: string,
+    imageLink: string
+  ) {
+    try {
+      const res = await Nfts.create({
+        // contractSddress:contractAddress,
+        contract_address: contractAddress,
+        title,
+        description,
+        taxon,
+        url,
+        image_link: imageLink,
+      })
+      return res
+    } catch (e) {
       // console.log
       return false
     }
   }
 
-  public static async updateNFT(id:number,contract_address:string,title:string,description:string,taxon:string,url:string,image_link:string){
-    try{
-      const res = await Nfts.updateOrCreate({id},{contract_address,title,description,taxon,url,image_link});
-      return res;
-    }catch(e){
+  public static async updateNFT(
+    id: number,
+    contract_address: string,
+    title: string,
+    description: string,
+    taxon: string,
+    url: string,
+    image_link: string
+  ) {
+    try {
+      const res = await Nfts.updateOrCreate(
+        { id },
+        { contract_address, title, description, taxon, url, image_link }
+      )
+      return res
+    } catch (e) {
       // console.log
       return false
     }
   }
 
-  public static async deleteNFT(id:number){
-    try{
-      const res = await Nfts.findOrFail(id);
-      res.delete();
-      return {delete:true}
-    }catch(e){
+  public static async deleteNFT(id: number) {
+    try {
+      const res = await Nfts.findOrFail(id)
+      res.delete()
+      return { delete: true }
+    } catch (e) {
       // console.log
       return false
     }
   }
 
-  public static async getAllNFTS(){
-    try{
+  public static async getAllNFTS() {
+    try {
       const res = await Nfts.query()
       // res.delete();
       return res
-    }catch(e){
-      console.log("HHHHHHHH", e);
+    } catch (e) {
       return false
     }
   }
-
-
+  public static async getAllFeatures() {
+    try {
+      const res = await Features.query()
+      // res.delete();
+      return res
+    } catch (e) {
+      return false
+    }
+  }
 
   public static async AllNfts(addressA: string, network: string) {
     let address = addressA

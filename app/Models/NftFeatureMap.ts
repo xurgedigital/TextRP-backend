@@ -1,6 +1,8 @@
 import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
 
-export default class Nft_feature_map extends BaseModel {
+export default class NftFeatureMap extends BaseModel {
+  public static table = 'nft_feature_mapping'
+
   @column({ isPrimary: true })
   public id: number
 
