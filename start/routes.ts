@@ -102,11 +102,17 @@ Route.delete('/delete-nft/:id', async ({ response, request }) => {
   const res = await NFTController.deleteNFT(id)
   return response.json(res || { error: true })
 })
+
+Route.delete('/delete-feature/:id', async ({ response, request }) => {
+  const { id } = request.params()
+  const res = await NFTController.deleteFeature(id)
+  return response.json(res || { error: true })
+})
 Route.post('/set-nft-for-feature/:id', async ({ response, request }) => {
   const { id } = request.params()
-  const { nfts } = request.body()
+  const nfts =
+    typeof request.body().nfts === 'string' ? JSON.parse(request.body().nfts) : request.body().nfts
   const res = await NFTController.setAllNftOfFeature(Number(id), nfts)
-  // const res = NFTController.getAllNftOfFeature(Number(id));
   return response.json(res || { error: true })
 })
 Route.get('/get-nft-for-feature/:id', async ({ response, request }) => {
