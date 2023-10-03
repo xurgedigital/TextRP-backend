@@ -349,7 +349,8 @@ export default class NFTController {
     // Return null if no address was found
     return null
   }
-  public static async enabledNfts(addressA: string, network: string) {
+
+  public static async enabledNfts(addressA: string) {
     let address = this.extractWalletAddress(addressA)
     // if (address.length !== 34) {
     //   const externalUser = await UserExternalId.query()
@@ -359,56 +360,77 @@ export default class NFTController {
     //   address = externalUser.externalId
     // }
     // console.log("UUUUUUUUUU");
-    const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
-      method: 'account_nfts',
-      params: [
-        {
-          account: address,
-          ledger_index: 'validated',
-        },
-      ],
-    })
+    // const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
+    //   method: 'account_nfts',
+    //   params: [
+    //     {
+    //       account: address,
+    //       ledger_index: 'validated',
+    //     },
+    //   ],
+    // })
     // if (res.result?.error) return { msg: 'Invalid Account' }
     let internalNFTs: any = []
-    if (res.result.account_nfts) {
-      internalNFTs = await SupportedNft.query()
-        .whereIn(
-          'contract_address',
-          res.result.account_nfts.map((nft) => nft.Issuer)
-        )
-        .whereIn(
-          'taxon',
-          res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
-        )
-    }
+
+    // if (res.result.account_nfts) {
+    //   internalNFTs = await SupportedNft.query()
+    //     .whereIn(
+    //       'contract_address',
+    //       res.result.account_nfts.map((nft) => nft.Issuer)
+    //     )
+    //     .whereIn(
+    //       'taxon',
+    //       res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
+    //     )
+    // }
     const authUser = await User.firstOrCreate(
       {
         address: address ? address : '',
       },
       {}
     )
-
+    let allNFTSS: any = []
     // console.log(res.result.account_nfts.map((nft) => nft.Issuer))
     const alwayEnabledNfts = await SupportedNft.query().whereIn('rule', ['always_enabled'])
+    const allFeatures = await Features.query().whereIn('rules', ['always_enabled', 'nft_enabled'])
+
+    if (allFeatures.length > 0) {
+      for (let i = 0; i < allFeatures.length; i++) {
+        const nftsmaps = await NftFeatureMap.query().where('feature_id', allFeatures[i].id)
+        for (let j = 0; j < nftsmaps.length; j++) {
+          const nftss = await Nfts.query().where('id', nftsmaps[j].nft_id)
+          for (let k = 0; k < nftss.length; k++) {
+            allNFTSS = [
+              ...allNFTSS,
+              {
+                feature: allFeatures[i].feature,
+                rule: allFeatures[i].rules,
+                title: nftss[k].title,
+                description: nftss[k].description,
+                contract_address: nftss[k].contract_address,
+                taxon: nftss[k].taxon,
+                url: nftss[k].url,
+                image: nftss[k].image_link,
+              },
+            ]
+          }
+        }
+      }
+    }
+
     if (alwayEnabledNfts.length > 0) {
       internalNFTs = [...internalNFTs, ...alwayEnabledNfts]
     }
     await authUser.load('subscriptions', (q) => {
       q.where('expires_at', '>', new Date())
     })
-    console.log('GGGGGGGGGGGGGGGG', internalNFTs)
 
     return {
-      nfts: internalNFTs.map((nft) => ({
-        address,
-        contract_address: nft.contract_address,
-        image: nft?.image_link,
-        taxon: nft.taxon,
-        feature: nft.feature,
-        rule: nft.rule,
-      })),
+      nfts: allNFTSS,
+      allNFTSS,
     }
   }
+
   public async check({ request, response }: HttpContextContract) {
     const verified = await NFTController.verify(
       request.param('address'),
