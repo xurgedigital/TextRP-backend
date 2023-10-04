@@ -350,7 +350,7 @@ export default class NFTController {
     return null
   }
 
-  public static async enabledNfts(addressA: string) {
+  public static async enabledNfts(addressA: string, network: string) {
     let address = this.extractWalletAddress(addressA)
     // if (address.length !== 34) {
     //   const externalUser = await UserExternalId.query()
@@ -360,15 +360,17 @@ export default class NFTController {
     //   address = externalUser.externalId
     // }
     // console.log("UUUUUUUUUU");
-    // const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
-    //   method: 'account_nfts',
-    //   params: [
-    //     {
-    //       account: address,
-    //       ledger_index: 'validated',
-    //     },
-    //   ],
-    // })
+    const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
+      method: 'account_nfts',
+      params: [
+        {
+          account: address,
+          ledger_index: 'validated',
+        },
+      ],
+    })
+    console.log('GGGGGG', res)
+
     // if (res.result?.error) return { msg: 'Invalid Account' }
     let internalNFTs: any = []
 
@@ -389,34 +391,48 @@ export default class NFTController {
       },
       {}
     )
-    let allNFTSS: any = []
+    let allNFTSS: any = {}
     // console.log(res.result.account_nfts.map((nft) => nft.Issuer))
     const alwayEnabledNfts = await SupportedNft.query().whereIn('rule', ['always_enabled'])
-    const allFeatures = await Features.query().whereIn('rules', ['always_enabled', 'nft_enabled'])
+    const features = await Features.query().whereIn('rules', ['always_enabled', 'nft_enabled'])
+    let allFeaturesWithKey: any = {}
+    let mappings: any = []
+    let allNftsWithKey: any = {}
 
-    if (allFeatures.length > 0) {
-      for (let i = 0; i < allFeatures.length; i++) {
-        const nftsmaps = await NftFeatureMap.query().where('feature_id', allFeatures[i].id)
-        for (let j = 0; j < nftsmaps.length; j++) {
-          const nftss = await Nfts.query().where('id', nftsmaps[j].nft_id)
-          for (let k = 0; k < nftss.length; k++) {
-            allNFTSS = [
-              ...allNFTSS,
-              {
-                feature: allFeatures[i].feature,
-                rule: allFeatures[i].rules,
-                title: nftss[k].title,
-                description: nftss[k].description,
-                contract_address: nftss[k].contract_address,
-                taxon: nftss[k].taxon,
-                url: nftss[k].url,
-                image: nftss[k].image_link,
-              },
-            ]
-          }
+    for (const f of features) {
+      const maps = await NftFeatureMap.query().where('feature_id', f.id)
+      mappings = [...mappings, ...maps]
+      allFeaturesWithKey[f.id] = f
+    }
+
+    for (const m of mappings) {
+      const data = await Nfts.query().where('id', m.nft_id)
+      allNftsWithKey[data[0].id] = data[0]
+    }
+
+    for (const m of mappings) {
+      const data = {
+        feature: [allFeaturesWithKey[m.feature_id].feature],
+        name: allNftsWithKey[m.nft_id].title,
+        taxon: allNftsWithKey[m.nft_id].taxon,
+        image: allNftsWithKey[m.nft_id].image_link,
+        url: allNftsWithKey[m.nft_id].url,
+        rules: allFeaturesWithKey[m.feature_id].rules,
+        contract_address: allNftsWithKey[m.nft_id].contract_address,
+      }
+      if (allNFTSS[m.nft_id]?.feature) {
+        allNFTSS[m.nft_id] = {
+          ...data,
+          feature: [...allNFTSS[m.nft_id].feature, ...data.feature],
         }
+      } else {
+        allNFTSS[m.nft_id] = data
       }
     }
+    // for (const m of Object.keys(allNFTSS)) {
+    //   nftss = [...nftss, allNFTSS[m]]
+    // }
+    // console.log(allNFTSS)
 
     if (alwayEnabledNfts.length > 0) {
       internalNFTs = [...internalNFTs, ...alwayEnabledNfts]
@@ -426,8 +442,9 @@ export default class NFTController {
     })
 
     return {
-      nfts: allNFTSS,
-      allNFTSS,
+      nfts: Object.keys(allNFTSS).map((items) => {
+        return allNFTSS[items]
+      }),
     }
   }
 
