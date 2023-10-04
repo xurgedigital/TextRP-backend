@@ -73,7 +73,12 @@ export default class NFTController {
 
   public static async deleteFeature(id: number) {
     try {
-      await Features.query().where('id', id).delete()
+      try {
+        await Features.query().where('id', id).delete()
+      } catch (err) {
+        await NftFeatureMap.query().where('feature_id', id).delete()
+        await Features.query().where('id', id).delete()
+      }
       return { delete: true }
     } catch (e) {
       console.log('HHHHHHHH', e)
