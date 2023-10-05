@@ -8,7 +8,7 @@ export default class CreditsController {
     const page = request.input('page', 1)
     const limit = request.input('limit', 10)
 
-    const users = await Credit.query().paginate(page, limit)
+    const users = await Credit.query().orderBy("name","asc").paginate(page, limit)
     users.baseUrl('/admin/credits')
     return response.json(users)
   }
