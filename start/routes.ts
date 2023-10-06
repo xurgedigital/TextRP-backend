@@ -21,10 +21,17 @@
 import Route from '@ioc:Adonis/Core/Route'
 import FeaturesController from 'App/Controllers/Http/FeaturesController'
 import NFTController from 'App/Controllers/Http/NFTController'
+import PlatformSetting from 'App/Models/PlatformSetting'
 
 Route.get('/', async () => {
   return { hello: 'You me now do you know what to do?' }
 })
+
+Route.get('/get-all-env', async ({ response }) => {
+  const data = await PlatformSetting.query().where('key', 'xrplActive')
+  return response.json(data)
+})
+
 Route.get('/available-features', async () => {
   // added login
   return { features: ['twilio', 'discord', 'twitter', 'dark_mode', 'login'] }

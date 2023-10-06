@@ -11,12 +11,6 @@ import User from 'App/Models/User'
 import { convertHexToString } from 'xrpl'
 import PlatformSetting from 'App/Models/PlatformSetting'
 
-// export enum NETWORKS {
-//   MAIN = 'https://xrplcluster.com',
-//   DEV = 'https://s.devnet.rippletest.net:51234',
-//   TEST = 'https://testnet.xrpl-labs.com',
-// }
-
 export default class NFTController {
   public static async verifyHolding(
     address: string,
