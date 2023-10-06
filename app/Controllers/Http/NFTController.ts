@@ -9,12 +9,14 @@ import NftFeatureMap from 'App/Models/NftFeatureMap'
 import Features from 'App/Models/Features'
 import User from 'App/Models/User'
 import { convertHexToString } from 'xrpl'
+import PlatformSetting from 'App/Models/PlatformSetting'
 
-export enum NETWORKS {
-  MAIN = 'https://xrplcluster.com',
-  DEV = 'https://s.devnet.rippletest.net:51234',
-  TEST = 'https://testnet.xrpl-labs.com',
-}
+// export enum NETWORKS {
+//   MAIN = 'https://xrplcluster.com',
+//   DEV = 'https://s.devnet.rippletest.net:51234',
+//   TEST = 'https://testnet.xrpl-labs.com',
+// }
+
 export default class NFTController {
   public static async verifyHolding(
     address: string,
@@ -108,7 +110,7 @@ export default class NFTController {
   public static async getAllFeature() {
     try {
       const res = await Features.query()
-      // res.delete();
+
       return res
     } catch (e) {
       return false
@@ -190,7 +192,21 @@ export default class NFTController {
     }
   }
 
+  public static async GetAllConfigs() {
+    const active: any = await PlatformSetting.query().where('key', 'xrplActive')
+    const data: any = await PlatformSetting.query().where('key', `${active[0].value}`)
+
+    const networks: any = {
+      MAIN: JSON.parse(data[0].value).main,
+      WALLET: JSON.parse(data[0].value).wallet,
+    }
+    return networks
+  }
+
   public static async AllNfts(addressA: string, network: string) {
+    console.log(network)
+    const NETWORK = await this.GetAllConfigs()
+
     let address = addressA
     if (address.length !== 34) {
       const externalUser = await UserExternalId.query()
@@ -200,7 +216,7 @@ export default class NFTController {
       address = externalUser.externalId
     }
 
-    const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
+    const { data: res } = await axios.post(NETWORK.MAIN, {
       method: 'account_nfts',
       params: [
         {
@@ -287,6 +303,7 @@ export default class NFTController {
   // get available nfts
 
   public static async verify(addressA: string, network: string) {
+    const NETWORK = await this.GetAllConfigs()
     let address = addressA
     if (address.length !== 34) {
       const externalUser = await UserExternalId.query()
@@ -295,10 +312,10 @@ export default class NFTController {
         .firstOrFail()
       address = externalUser.externalId
     }
+    console.log(network, NETWORK)
     // console.log('address', address)
-    console.log(NETWORKS[network.toUpperCase()])
 
-    // const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
+    // const { data: res } = await axios.post(NETWORK.MAIN, {
     //   method: 'account_nfts',
     //   params: [
     //     {
@@ -356,7 +373,10 @@ export default class NFTController {
   }
 
   public static async enabledNfts(addressA: string, network: string) {
+    const NETWORKS = await this.GetAllConfigs()
     let address = this.extractWalletAddress(addressA)
+
+    console.log(network)
     // if (address.length !== 34) {
     //   const externalUser = await UserExternalId.query()
     //     .where('user_id', address)
@@ -365,7 +385,7 @@ export default class NFTController {
     //   address = externalUser.externalId
     // }
     // console.log("UUUUUUUUUU");
-    const { data: res } = await axios.post(NETWORKS[network.toUpperCase()], {
+    const { data: res } = await axios.post(NETWORKS.MAIN, {
       method: 'account_nfts',
       params: [
         {
