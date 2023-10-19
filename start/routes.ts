@@ -177,6 +177,7 @@ Route.delete('/logout', async ({ session, auth }) => {
 
 Route.post('payment/credit/:credit', 'User/PaymentController.createPayment')
 Route.post('accounts/:address/payments', 'User/PaymentController.transferWithSecretKey')
+Route.post('accounts/makeTxn/:credit', 'User/PaymentController.makeTxn')
 Route.post('payment/subscription/:credit', 'User/PaymentController.createSubscription')
 
 Route.group(() => {

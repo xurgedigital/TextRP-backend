@@ -26,6 +26,7 @@ const api = new RippleAPI({ server: 'wss://s.altnet.rippletest.net:51233/' })
 export enum PaymentTypeEnum {
   CREDIT = 'CREDIT',
   SUBSCRIPTION = 'SUBSCRIPTION',
+  WALLET_TRANSFER = 'WALLET_TRANSFER',
 }
 
 export default class PaymentController {
@@ -148,6 +149,7 @@ export default class PaymentController {
       )
     }
   }
+
   public async transferPayment({ request, params }: HttpContextContract) {
     const address = params.address
     const { message, amount } = request.only(['message', 'amount'])
@@ -191,6 +193,7 @@ export default class PaymentController {
         .firstOrFail()
       address = externalUser.externalId
     }
+
     if (!params.credit) {
       throw new UnProcessableException('Please provide creditID in params!')
     }
@@ -208,17 +211,101 @@ export default class PaymentController {
     )
     return this.processPayment(authUser, price, paymentType, id)
   }
+  public async makeTxn({ request, params }: HttpContextContract) {
+    let address = request.input('address')
+    if (address.length !== 34) {
+      const externalUser = await UserExternalId.query()
+        .where('user_id', address)
+        .where('auth_provider', 'oidc-xumm')
+        .firstOrFail()
+      address = externalUser.externalId
+    }
 
+    if (!params.credit) {
+      throw new UnProcessableException('Please provide total XRP in params!')
+    }
+    const paymentType = PaymentTypeEnum.WALLET_TRANSFER
+    const authUser = await User.firstOrCreate(
+      {
+        address: address,
+      },
+      {}
+    )
+    return this.processPaymentWallet(
+      authUser,
+      params.credit,
+      paymentType,
+      Math.floor(Math.random() * 1000000 + 1),
+      address
+    )
+  }
+  public async processPaymentWallet(
+    authUser: User,
+    paymentAmount: number,
+    paymentType: PaymentTypeEnum,
+    entityId: number,
+    destinationAddress?: string
+  ) {
+    let destination
+    try {
+      if (destinationAddress) {
+        destination = destinationAddress
+      } else
+        destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
+          .value
+    } catch (error) {
+      throw new NotFoundException('Wallet not found in platform settings')
+    }
+    await authUser.load('discount')
+
+    const amount = paymentAmount * 1000000
+    const payload: XummPostPayloadBodyJson = {
+      txjson: {
+        TransactionType: 'Payment',
+        Destination: destination,
+        Amount: amount.toString(),
+      },
+    }
+    const ping = await XummService.sdk.payload.create(payload).catch((error) => {
+      Logger.error(error)
+      throw new UnProcessableException('Error while creating payment from Xumm')
+    })
+    Logger.debug(
+      {
+        ping,
+        payload,
+      },
+      'Ping response with payload'
+    )
+    if (!ping?.uuid) {
+      throw new UnProcessableException('UUID not returned by xumm')
+    }
+    await Payment.firstOrCreate(
+      {
+        userId: authUser?.id,
+        uuid: ping?.uuid,
+        payload: JSON.stringify(payload),
+        paymenttableId: entityId,
+        paymenttableType: paymentType,
+      },
+      {}
+    )
+    return { data: ping }
+  }
   public async processPayment(
     authUser: User,
     paymentAmount: number,
     paymentType: PaymentTypeEnum,
-    entityId: number
+    entityId: number,
+    destinationAddress?: string
   ) {
     let destination
     try {
-      destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
-        .value
+      if (destinationAddress) {
+        destination = destinationAddress
+      } else
+        destination = (await PlatformSetting.query().where('key', 'receiveWallet').firstOrFail())
+          .value
     } catch (error) {
       throw new NotFoundException('Wallet not found in platform settings')
     }
@@ -226,6 +313,8 @@ export default class PaymentController {
 
     const discoutAmount = (authUser.discount?.discount || 0) / 100
     const amount = (paymentAmount - paymentAmount * discoutAmount) * 10 ** 6
+    console.log('JJJJJJJJJJKKKKKKK', destination)
+
     const payload: XummPostPayloadBodyJson = {
       txjson: {
         TransactionType: 'Payment',
