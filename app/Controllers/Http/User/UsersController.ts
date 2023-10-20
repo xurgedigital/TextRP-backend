@@ -50,6 +50,23 @@ export default class UsersController {
       return response.json({ user: authUser, address })
     }
   }
+  public async fromAllAddress({ response, request }: HttpContextContract) {
+    let addresses = request.input('addresses')
+    console.log('HHHHHHHHHH', addresses)
+
+    // console.log('JJJJJJJJJJJJJJJ$J%$%$', address.length, address, address[0])
+    let newAddresses: object[] = []
+    // let userToken = []
+    for (let index = 0; index < addresses.length; index++) {
+      const address = addresses[index]
+      const externalUser = await UserExternalId.query()
+        .where('user_id', address)
+        .where('auth_provider', 'oidc-xumm')
+        .firstOrFail()
+      newAddresses.push({ wallet: externalUser.externalId, userId: address })
+    }
+    return response.json({ newAddresses })
+  }
   public async update({ request, response, auth }: HttpContextContract) {
     await auth.use('web').authenticate()
     const user = await auth.use('web').user

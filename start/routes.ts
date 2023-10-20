@@ -168,6 +168,7 @@ Route.get('/check-nft/:address/:network/:service', 'NFTController.check')
 
 Route.get('/me', 'User/UsersController.index').middleware(['auth', 'active'])
 Route.post('/my-address', 'User/UsersController.fromAddress')
+Route.post('/all-address', 'User/UsersController.fromAllAddress')
 
 Route.delete('/logout', async ({ session, auth }) => {
   session.forget('current_uuid')
