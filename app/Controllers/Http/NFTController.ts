@@ -1,15 +1,14 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import axios from 'axios'
-import { RippleAPI } from 'ripple-lib'
+const xrpl = require('xrpl')
 import SupportedNft from 'App/Models/SupportedNft'
 import UserExternalId from 'App/Models/UserExternalId'
 import Nfts from 'App/Models/Nfts'
-// import Nfts from 'App/Models/nfts'
 import NftFeatureMap from 'App/Models/NftFeatureMap'
 import Features from 'App/Models/Features'
 import User from 'App/Models/User'
 import { convertHexToString } from 'xrpl'
-import PlatformSetting from 'App/Models/PlatformSetting'
+import { GetAllConfigs } from './GetConfig'
 
 export default class NFTController {
   public static async verifyHolding(
@@ -43,7 +42,6 @@ export default class NFTController {
   public static async addFeature(feature: string, rule: string, description: string) {
     try {
       const res = await Features.create({ feature, rules: rule, description })
-      console.log('RRRRRRRRRR', res)
       return res
     } catch (e) {
       return false
@@ -58,11 +56,8 @@ export default class NFTController {
   ) {
     try {
       const res = await Features.updateOrCreate({ id }, { feature, rules: rule, description })
-      console.log('RRRRRRRRRR', res)
       return res
     } catch (e) {
-      console.log('HHHHHHHH', e)
-
       return false
     }
   }
@@ -186,21 +181,9 @@ export default class NFTController {
     }
   }
 
-  public static async GetAllConfigs() {
-    const active: any = await PlatformSetting.query().where('key', 'xrplActive')
-    const data: any = await PlatformSetting.query().where('key', `${active[0].value}`)
-
-    const networks: any = {
-      MAIN: JSON.parse(data[0].value).main,
-      WALLET: JSON.parse(data[0].value).wallet,
-    }
-    return networks
-  }
-
   public static async AllNfts(addressA: string, network: string) {
     console.log(network)
-    const NETWORK = await this.GetAllConfigs()
-
+    const NETWORK = await GetAllConfigs()
     let address = addressA
     if (address.length !== 34) {
       const externalUser = await UserExternalId.query()
@@ -232,72 +215,38 @@ export default class NFTController {
     return { msg: 'No NFTS Found' }
   }
   public static async verifyAddress(address: string) {
-    // const { RippleAPI } = require('ripple-lib');
-
-    // // Create a RippleAPI instance and connect to the XRP Ledger Testnet server
-    const api = new RippleAPI({
-      //   server: 'wss://s1.ripple.com', // Use the mainnet server or a testnet server
-      server: 'wss://s.altnet.rippletest.net:51233', // Ripple Testnet server
-    })
-    // // Replace with the wallet address you want to check
-    // const accountAddress = 'r4A7yTguEqq1XUZ8eaq4DyKeyZGGmngY74';
+    const NETWORK = await GetAllConfigs()
+    const client = new xrpl.Client(NETWORK.WALLET) // Testnet server
     let result = {}
-    //     const rippleCodec = require('ripple-address-codec');
+    try {
+      await client.connect()
 
-    // function isValidXrpAddress(address) {
-    //   try {
-    //     return rippleCodec.isValidClassicAddress(address);
-    //   } catch (error) {
-    //     return false;
-    //   }
-    // }
+      const accountInfo = await client.request({
+        command: 'account_info',
+        account: address,
+      })
 
-    // // Example usage:
-    // const walletAddress = 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh';
-
-    // if (isValidXrpAddress(walletAddress)) {
-    //   console.log('The XRP wallet address is valid.');
-    // } else {
-    //   console.log('The XRP wallet address is invalid.');
-    // }
-
-    // // Connect to the XRP Ledger Testnet server
-    await api.connect().then(async () => {
-      try {
-        // Fetch the transaction history for the account
-        const transactions = await api.getTransactions(address, {
-          limit: 1, // You can adjust the limit as needed
-        })
-        // console.log("LLLLLLLLL", transactions);
-        // Check if the account has any transaction history
-        if (transactions.length > 0) {
-          result['active'] = true
-        } else {
-          result['active'] = false
-        }
-      } catch (error) {
+      if (accountInfo) {
+        console.log('The address is active on the XRP testnet.', accountInfo)
+        result['active'] = true
+        result['isValid'] = true
+      } else {
+        console.log('The address is not active on the XRP testnet.')
         result['active'] = false
+        result['isValid'] = true
       }
-      try {
-        // Fetch account info
-        const accountInfo = await api.getAccountInfo(address)
-
-        if (accountInfo) {
-          result['isValid'] = true
-        } else result['isValid'] = false
-      } catch (error) {
-        result['isValid'] = false
-      } finally {
-        // Disconnect from the XRP Ledger Testnet server
-        api.disconnect()
-      }
-    })
+    } catch (error) {
+      console.error('Error occurred:', error)
+      result['active'] = false
+      result['isValid'] = false
+    } finally {
+      await client.disconnect()
+    }
     return result
   }
-  // get available nfts
 
   public static async verify(addressA: string, network: string) {
-    const NETWORK = await this.GetAllConfigs()
+    const NETWORK = await GetAllConfigs()
     let address = addressA
     if (address.length !== 34) {
       const externalUser = await UserExternalId.query()
@@ -307,29 +256,9 @@ export default class NFTController {
       address = externalUser.externalId
     }
     console.log(network, NETWORK)
-    // console.log('address', address)
 
-    // const { data: res } = await axios.post(NETWORK.MAIN, {
-    //   method: 'account_nfts',
-    //   params: [
-    //     {
-    //       account: address,
-    //       ledger_index: 'validated',
-    //     },
-    //   ],
-    // })
-    // console.log(res.result)
-
-    // if (res.result?.error) return undefined
     const internalNFTs = await SupportedNft.query()
-    // .whereIn(
-    //   'contract_address',
-    //   res.result.account_nfts.map((nft) => nft.Issuer)
-    // )
-    // .whereIn(
-    //   'taxon',
-    //   res.result.account_nfts.map((nft) => nft.NFTokenTaxon)
-    // )
+
     const authUser = await User.firstOrCreate(
       {
         address: address,
@@ -367,7 +296,7 @@ export default class NFTController {
   }
 
   public static async enabledNfts(addressA: string, network: string) {
-    const NETWORKS = await this.GetAllConfigs()
+    const NETWORKS = await GetAllConfigs()
     let address = this.extractWalletAddress(addressA)
 
     console.log(network)

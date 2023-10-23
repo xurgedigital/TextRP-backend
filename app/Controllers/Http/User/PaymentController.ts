@@ -6,17 +6,16 @@ import Payment from 'App/Models/Payment'
 import XummService from 'App/Services/XummService'
 import PlatformSetting from 'App/Models/PlatformSetting'
 import Logger from '@ioc:Adonis/Core/Logger'
+import { GetAllConfigs } from '../GetConfig'
 import { XummPostPayloadBodyJson } from 'xumm-sdk/dist/src/types/xumm-api'
 import NotFoundException from 'App/Exceptions/NotFoundException'
 import UnProcessableException from 'App/Exceptions/UnProcessableException'
 import AuthorizationException from 'App/Exceptions/AuthorizationException'
 import User from 'App/Models/User'
 import UserExternalId from 'App/Models/UserExternalId'
-import { RippleAPI } from 'ripple-lib'
-
+const xrpl = require('xrpl')
 const senderAddress = 'rUZf4vHhLJYGaY3MjtqGcd8cwiimH3aQzw' // Replace with your sender address
 const senderSecretKey = 'sEd7ZjVAeAY58rwYVokvzsRALmgV8x4' // Replace with your sender secret key
-const api = new RippleAPI({ server: 'wss://s.altnet.rippletest.net:51233/' })
 
 // import { Duration } from 'luxon'
 // const XUMM = new XummSdk(
@@ -94,59 +93,38 @@ export default class PaymentController {
     return this.processPayment(authUser, price, paymentType, id)
   }
   public async transferWithSecretKey({ request, params }: HttpContextContract) {
+    const NETWORK = await GetAllConfigs()
+    const client = new xrpl.Client(NETWORK.WALLET)
+    await client.connect()
+
+    // Prepare transaction -————————————————-———————————»
+    const wallet = xrpl.Wallet.fromSeed(senderSecretKey)
+
     const address = params.address
     const { message, amount } = request.only(['message', 'amount'])
+
+    const prepared = await client.autofill({
+      TransactionType: 'Payment',
+      Account: senderAddress,
+      Amount: xrpl.xrpToDrops(amount),
+      Destination: address,
+      message: message,
+    })
+    const maxLedger = prepared.LastLedgerSequence
+    console.log('Prepared txn instructions : ', prepared)
+    console.log('Txn cost:', xrpl.dropsToXrp(prepared.Fee), 'XRP')
+    console.log('Txn expires after ledger: ', maxLedger)
+    // sign prepared instruction ----
+    const signed = wallet.sign(prepared)
+    console.log('Identifying hash:', signed.hash)
+    console.log('signed blob:', signed.tx_blob)
     try {
-      // Connect to the Ripple network
-      // Replace with your preferred Ripple server URL
-      await api.connect()
-      console.log('Connected to the Ripple network')
-
-      // Retrieve the sender's account information (to check the XRP balance)
-      const senderAccountInfo = await api.getAccountInfo(senderAddress)
-      console.log('Sender XRP balance:', senderAccountInfo.xrpBalance)
-
-      console.log('!!!!!!!!', Buffer.from(message, 'utf-8').toString('hex'))
-
-      // Prepare the transaction
-      const preparedTx = await api.preparePayment(senderAddress, {
-        source: {
-          address: senderAddress,
-          maxAmount: {
-            value: amount,
-            currency: 'XRP',
-          },
-        },
-        destination: {
-          address: address,
-          amount: {
-            value: amount,
-            currency: 'XRP',
-          },
-        },
-        memos: [
-          {
-            data: Buffer.from(message, 'utf-8').toString('hex'),
-          },
-        ],
-      })
-
-      // Sign the transaction with the sender's secret key
-      const signedTx = api.sign(preparedTx.txJSON, senderSecretKey)
-
-      // Submit the signed transaction to the Ripple network
-      const txResponse = await api.submit(signedTx.signedTransaction)
-      console.log('Transaction Response:', txResponse)
-
-      // Disconnect from the Ripple network
-      await api.disconnect()
-      console.log('Disconnected from the Ripple network')
-      return { success: 'amount transfered' }
+      const submitResult = await client.submitAndWait(signed.tx_blob)
+      client.disconnect()
+      return { submitResult }
     } catch (error) {
-      console.error('Error:', error)
-      throw new UnProcessableException(
-        error ? error.toString() : 'issue while processing the transaction'
-      )
+      client.disconnect()
+      return { error: error }
     }
   }
 
@@ -313,8 +291,6 @@ export default class PaymentController {
 
     const discoutAmount = (authUser.discount?.discount || 0) / 100
     const amount = (paymentAmount - paymentAmount * discoutAmount) * 10 ** 6
-    console.log('JJJJJJJJJJKKKKKKK', destination)
-
     const payload: XummPostPayloadBodyJson = {
       txjson: {
         TransactionType: 'Payment',
