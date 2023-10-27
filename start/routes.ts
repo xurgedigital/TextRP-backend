@@ -81,6 +81,11 @@ Route.get('/get-all-nfts', async ({ response }) => {
   const res = await NFTController.getAllNFTS()
   return response.json(res || { error: true })
 })
+Route.get('/get-all-holding/:wallet', async ({ response, request }) => {
+  const { wallet } = request.params()
+  const res = await NFTController.getAllHoldings(wallet)
+  return response.json(res || { error: true })
+})
 Route.post('/create-new-nft', async ({ response, request }) => {
   const { title, url, description, contractAddress, taxon, imageLink } = request.body()
   const res = await NFTController.addNFT(contractAddress, title, description, taxon, url, imageLink)

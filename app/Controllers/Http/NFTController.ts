@@ -214,6 +214,28 @@ export default class NFTController {
     }
     return { msg: 'No NFTS Found' }
   }
+  public static async getAllHoldings(addressA: string) {
+    const NETWORK = await GetAllConfigs()
+    const client = new xrpl.Client(NETWORK.WALLET)
+    try {
+      await client.connect()
+
+      // const request = {
+      //     command: 'account_info',
+      //     account: addressA,
+      //     ledger_index: 'validated'
+      // };
+      // const response = await client.request(request);
+      const existingBalance = await client.getBalances(addressA)
+
+      return existingBalance
+    } catch (error) {
+      console.error(error)
+      throw error
+    } finally {
+      await client.disconnect()
+    }
+  }
   public static async verifyAddress(address: string) {
     const NETWORK = await GetAllConfigs()
     const client = new xrpl.Client(NETWORK.WALLET) // Testnet server
