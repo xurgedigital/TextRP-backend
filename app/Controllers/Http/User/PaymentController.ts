@@ -191,6 +191,7 @@ export default class PaymentController {
   }
   public async makeTxn({ request, params }: HttpContextContract) {
     let address = request.input('address')
+    let sender = request.input('sender')
     let currency = request.input('currency')
     if (address.length !== 34) {
       const externalUser = await UserExternalId.query()
@@ -216,6 +217,7 @@ export default class PaymentController {
       authUser,
       params.credit,
       currency,
+      sender,
       paymentType,
       Math.floor(Math.random() * 1000000 + 1),
       address
@@ -225,6 +227,7 @@ export default class PaymentController {
     authUser: User,
     paymentAmount: number,
     currency: string,
+    sender: string,
     paymentType: PaymentTypeEnum,
     entityId: number,
     destinationAddress?: string
@@ -240,24 +243,21 @@ export default class PaymentController {
       throw new NotFoundException('Wallet not found in platform settings')
     }
     await authUser.load('discount')
-    console.log(':::::::::::::::1', paymentAmount, currency, destinationAddress)
 
-    const amount = paymentAmount * 1000000
+    const amount = paymentAmount
     const payload: XummPostPayloadBodyJson = {
       txjson: {
         TransactionType: 'Payment',
         Destination: destination,
-        Amount: amount.toString(),
+        Amount: {
+          value: amount.toString(),
+          currency: currency,
+          issuer: sender, // address of the entity issuing the currency
+        },
       },
     }
-    console.log(':::::::::::::::2', payload)
 
-    const ping = await XummService.sdk.payload.create(payload).catch((error) => {
-      Logger.error(error)
-      console.log(':::::::::::::::', error)
-
-      throw new UnProcessableException('Error while creating payment from Xumm')
-    })
+    const ping = await XummService.sdk.payload.create(payload)
     Logger.debug(
       {
         ping,
@@ -265,6 +265,7 @@ export default class PaymentController {
       },
       'Ping response with payload'
     )
+
     if (!ping?.uuid) {
       throw new UnProcessableException('UUID not returned by xumm')
     }
@@ -278,7 +279,6 @@ export default class PaymentController {
       },
       {}
     )
-    console.log(':::::::::::::::3', ping)
 
     return { data: ping }
   }
