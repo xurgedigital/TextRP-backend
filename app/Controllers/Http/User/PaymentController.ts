@@ -109,6 +109,13 @@ export default class PaymentController {
       Amount: xrpl.xrpToDrops(amount),
       Destination: address,
       message: message,
+      Memos: [
+        {
+          Memo: {
+            MemoData: Buffer.from(message, 'utf8').toString('hex'),
+          },
+        },
+      ],
     })
     const maxLedger = prepared.LastLedgerSequence
     console.log('Prepared txn instructions : ', prepared)
