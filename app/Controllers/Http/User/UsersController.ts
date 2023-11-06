@@ -59,11 +59,15 @@ export default class UsersController {
     // let userToken = []
     for (let index = 0; index < addresses.length; index++) {
       const address = addresses[index]
-      const externalUser = await UserExternalId.query()
-        .where('user_id', address)
-        .where('auth_provider', 'oidc-xumm')
-        .firstOrFail()
-      newAddresses.push({ wallet: externalUser.externalId, userId: address })
+      try {
+        const externalUser = await UserExternalId.query()
+          .where('user_id', address)
+          .where('auth_provider', 'oidc-xumm')
+          .firstOrFail()
+        newAddresses.push({ wallet: externalUser.externalId, userId: address })
+      } catch (error) {
+        console.log('GGGGGGGGGGGGG', error)
+      }
     }
     return response.json({ newAddresses })
   }
