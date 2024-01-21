@@ -1,79 +1,41 @@
-1. Twilio API
- 1.1 POST        /user/twilio/create_conversation 
-    This API accepts { conversationName } in the body and returns { conversationParticipant,conversation }.
-    This will create a conversation in the Twilio and add the current loggedin user into that conversation.
-    The conversation in the response has the name and the id that will be used in furthur APIs.
-    In case of errors:
-        a. 'Unauthorized Access!': The current user needs authentication.
-        b. 'Please provide a name to your conversation!': conversationName was not provided in the body.
-        c. 'An error occoured from twilio while creating user!': This error occours when something went wrong from twilio's end.
-        d. 'An error occoured from twilio while creating conversation!': This error occours when something went wrong from twilio's end.
+TextRP: Unified Messaging for the XRPL
 
- 1.2 POST        /user/twilio/start_conversation/:conversation
-    This API will accept { conversation } in the params which is conversationID and { walletAddress } in the body which indicated the reciever walletaddress.
-    It will create a participant of the reciever user and add it to the twilio conversation.
-    In case of errors:
-        a. 'Please provide conversation in params!': Provide conversationID in the params
-        b. 'Conversation Not found!': The conversationID provided dosent exits in the database.
-        c. 'Reciver wallet address not found!': The wallet address needs to be provided in the body 
-        d. 'Reciver not found!': The wallet address provided in the body dosent belong to any reciever
-        e. 'An error occoured from twilio while creating user!': This error occours when something went wrong from twilio's end.
-        f. 'An error occoured from twilio while adding participant to conversation!': This error occours when something went wrong from twilio's end.
 
- 1.3 POST        /user/twilio/send_message/:conversation
-    This API accepts { conversation } in the params as conversationID and { message } in the body.
-    In case of errors:
-        a. 'Unauthorized Access!': The current user needs authentication.
-        b. 'Please provide conversation in params!': Provide conversationID in the params
-        c. 'Conversation Not found!': The conversationID provided dosent exits in the database.
-        d. 'Please send a message in the body!': The message needs to be provided in the body 
-        e. 'An error occoured from twilio while creating messages!': This error occours when something went wrong from twilio's end.
+Email: nft@textrp.io
+Whitepaper: tinyurl.com/WhitepaperTextRP
+Twitter: @textrpsms
+Partnership Integration: bit.ly/textrp-partner
+Links: linktr.ee/textrp
+Launch Pack Guide: tinyurl.com/TextRP-LPGuide
+Launch Pack Mint: utilityNFT.tech
+Use Case videos: youtube.com/@textrp
 
- 1.4 GET|HEAD    /user/twilio/get_all_messages/:conversation
-    This API accepts { conversation } in the params as conversationID and provides all messages from that conversation.
-     In case of errors:
-        a. 'Please provide conversation in params!': Provide conversationID in the params
-        b. 'Conversation Not found!': The conversationID provided dosent exits in the database.
-        c. 'An error occoured from twilio while fetching messages!': This error occours when something went wrong from twilio's end.
 
- 1.5 GET|HEAD    /user/twilio/mark_message_as_read/:message
-    This API marks a message as read. It takes { message } as messageID in the params and user from authUser(current logged in user).
-     In case of errors:
-        a. 'Unauthorized Access!': The current user needs authentication.
-        b. 'Please provide messageId in params!': Provide messageId in the params
-        c. 'User Message Not found!': The messageId provided has no matching data.
-        d. 'User has already read the message!': If user has already read it.
-        e. 'Something went wrong': If something went wrong with the server
+TextRP is an innovative Unified Messaging System that is set to revolutionize utility on the XRP Ledger (XRPL). We fuse the power of the Matrix open standard and communication protocol with the XRPL, creating a powerful union of technologies that ushers in a new era of messaging capabilities.
 
-2. Socket
-   Events:
-      a. joinConversation: 
-         Emit event to this and send conversationId ex: socket.emit('joinConversation',3). Here 3 is sent as the conversationId. 
-         The socket user will join the channel/room name conversation.platformId (ex: CHc801c52673f342c9afb15cd52106e990) provided by twilio.
-      b. joinedChannel: 
-         Listen to this event, once joinConversation is executed succesfuly, you will recieve a conversation instance on this event.
-         Example response:
-         socket.on('joinedChannel',payload)
-         payload = {
-               "id": 4,
-               "identifier_id": "4",
-               "creator_id": "3",
-               "platform_converstion_id": "CHe7f14cff6c544a99bc1816780c50bf18",
-               "created_at": "2023-03-28T20:26:04.771+05:30",
-               "updated_at": "2023-03-28T20:26:04.771+05:30",
-               "name": "Crediaat 2"
-            }
-      c. messageNotification:
-         Socket rooms/channels are created on conversation.platformId (ex: CHc801c52673f342c9afb15cd52106e990). 
-         When the user has joined the channel,
-         messageNotification is an event that is emitted in the channel when user sends message in the channel.
-         
-      d. error:
-         Listen to this event for any errors that will be emitted during the execution of any socket event.
+Harnessing the Transformative Potential of DLT
+We believe DLT is a transformative technology. By integrating with the XRPL, we unlock a world of possibilities for users. Your XRP wallet address becomes your gateway to the TextRP experience, serving as your default username and identifier. This integration ensures easy connectivity, seamless communication, and user privacy.
 
-   To listen to new messages:
-      Emit joinConversation conversationId
-      Listen joinedChannel
-      Listen messageNotification
-      Send message in the channel
-      
+Uniqueness and Individuality
+TextRP goes beyond traditional messaging platforms by incorporating NFT-enabled features. By owning specific NFTs, users can unlock messaging functionalities and gain access to exclusive privileges within the platform. Our platform-specific NFTs, known as "Feature Packs," allow users to select and utilize the features they want, giving them full control of their messaging experience.
+ 
+Security and Privacy
+Security is a top priority at TextRP. We prioritize user privacy by implementing the highest grade end-to-end encryption as the default standard. In-app messages can only be decrypted by participants in the conversation, ensuring complete confidentiality. We have also integrated a secure and seamless authentication process through XUMM wallet login, offering users a frictionless onboarding experience while safeguarding their data.
+
+Effortless Communication
+We understand the importance of bridging communication gaps between different platforms. TextRP enables users to communicate effortlessly across various channels, including SMS/MMS, Twitter DMs, Discord DMs, Slack, and more. Our platform unifies conversations from disparate inboxes into one, making communication a breeze and eliminating the need for fragmented conversations scattered across different apps.
+
+Inclusivity and Connectivity
+TextRP embraces inclusivity through its Ledger Relay Messaging feature. Users can send messages to any XRP address, regardless of whether the recipient has a TextRP account. For active TextRP users, the conversation continues within the app. If the recipient doesn't have a TextRP account, the message is stored, and a microtransaction is sent via the XRPL with a message notification in the memo field. 
+
+NFT Integration and Partner Collaborations
+TextRP's NFT Integration Subsystem allows integration of NFTs from other projects into our platform. By partnering with TextRP, Web3 projects can enhance the functionality of their NFTs, engage with their community, and leverage our messaging capabilities. Users' NFT holdings are verified upon login, unlocking specific features associated with partnered collections, such as branded sticker packs and custom themes. This integration provides added value, an immersive messaging experience, and new avenues for engagement and utility within the TextRP ecosystem.
+
+Launch Packs and Community Engagement
+To support the development and adoption of the TextRP messaging platform, we offer Launch Packs, a limited-edition collection of 5,000 founder-level NFTs. By holding at least one Launch Pack NFT, users gain exclusive benefits, including a Lifetime Subscription NFT, airdrops of new Feature Packs, and access to the Chat Rewards Program. Launch Packs not only provide access to premium features and benefits but also foster a sense of community and engagement among early adopters.
+
+Feature Distribution
+Feature Packs (FPs) are distributed to enhance the customization of the TextRP messaging experience. Holders of Launch Packs (LPs) benefit from the distribution model. When a new feature is developed, it undergoes testing by alpha-tester FP holders. Each LP holder receives an airdrop of one new FP for each LP held. The phased distribution of FPs occurs in biweekly waves, starting with Splendid Tier, Aurious Tier, Candidus Tier, and then all other LP holders. The final wave is the FP public sale. FPs are distributed based on the amount of LPs held per wallet on a 1:1 ratio. These FPs are non-fungible tokens (NFTs) that can be freely traded by the holders. Public sale of FPs is delayed until Wave 5, allowing LP holders up to 60 days (depending on the Tier) to distribute extra FPs to the general public through preferred marketplaces or peer-to-peer trading.
+
+Join the New Evolution of Utility
+TextRP is committed to add a unique utility to the XRPL and revolutionize the messaging landscape. Through our integration with the XRPL, NFT-enabled features, robust security measures, and focus on seamless communication, we proudly present a messaging platform that empowers users to connect, communicate, and thrive. Join us on this exciting journey as we reshape the way people interact and communicate worldwide. Together, we will redefine the boundaries of digital connectivity and propel the XRPL into the hands of millions, fostering a new era of global communication and collaboration.
